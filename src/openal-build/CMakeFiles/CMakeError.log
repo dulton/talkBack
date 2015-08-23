@@ -1,0 +1,382 @@
+Performing C SOURCE FILE Test HAVE_C11_ATOMIC failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_1b11d/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_1b11d.dir\build.make CMakeFiles/cmTC_1b11d.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1b11d.dir/src.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99  -DHAVE_C11_ATOMIC  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_1b11d.dir\src.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\src.c
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\src.c:1:23: fatal error: stdatomic.h: No such file or directory
+ #include <stdatomic.h>
+                       ^
+compilation terminated.
+CMakeFiles\cmTC_1b11d.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_1b11d.dir/src.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_1b11d.dir/src.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_1b11d/fast' failed
+mingw32-make.exe: *** [cmTC_1b11d/fast] Error 2
+
+Source file was:
+#include <stdatomic.h>
+ int _Atomic foo;
+ int main()
+ {
+     return atomic_load(&foo);
+ }
+Determining if the include file ftw.h exists failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_69dd7/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_69dd7.dir\build.make CMakeFiles/cmTC_69dd7.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_69dd7.dir/CheckIncludeFile.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99   -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_69dd7.dir\CheckIncludeFile.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFile.c
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFile.c:1:17: fatal error: ftw.h: No such file or directory
+ #include <ftw.h>
+                 ^
+compilation terminated.
+CMakeFiles\cmTC_69dd7.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_69dd7.dir/CheckIncludeFile.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_69dd7.dir/CheckIncludeFile.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_69dd7/fast' failed
+mingw32-make.exe: *** [cmTC_69dd7/fast] Error 2
+
+
+Determining if the include file sys/sysconf.h exists failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_a93ee/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_a93ee.dir\build.make CMakeFiles/cmTC_a93ee.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a93ee.dir/CheckIncludeFile.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99   -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_a93ee.dir\CheckIncludeFile.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFile.c
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFile.c:1:25: fatal error: sys/sysconf.h: No such file or directory
+ #include <sys/sysconf.h>
+                         ^
+compilation terminated.
+CMakeFiles\cmTC_a93ee.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_a93ee.dir/CheckIncludeFile.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_a93ee.dir/CheckIncludeFile.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_a93ee/fast' failed
+mingw32-make.exe: *** [cmTC_a93ee/fast] Error 2
+
+
+Determining if the include file ieeefp.h exists failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_46ec0/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_46ec0.dir\build.make CMakeFiles/cmTC_46ec0.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_46ec0.dir/CheckIncludeFile.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99   -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_46ec0.dir\CheckIncludeFile.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFile.c
+In file included from E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFile.c:1:0:
+E:/simon/code/mingw482_32/mingw482_32/i686-w64-mingw32/include/ieeefp.h:6:22: fatal error: ansidecl.h: No such file or directory
+ #include <ansidecl.h>
+                      ^
+compilation terminated.
+CMakeFiles\cmTC_46ec0.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_46ec0.dir/CheckIncludeFile.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_46ec0.dir/CheckIncludeFile.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_46ec0/fast' failed
+mingw32-make.exe: *** [cmTC_46ec0/fast] Error 2
+
+
+Determining if the aligned_alloc exist failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_e306e/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_e306e.dir\build.make CMakeFiles/cmTC_e306e.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e306e.dir/CheckSymbolExists.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99   -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_e306e.dir\CheckSymbolExists.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c: In function 'main':
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c:8:19: error: 'aligned_alloc' undeclared (first use in this function)
+   return ((int*)(&aligned_alloc))[argc];
+                   ^
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles\cmTC_e306e.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_e306e.dir/CheckSymbolExists.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_e306e.dir/CheckSymbolExists.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_e306e/fast' failed
+mingw32-make.exe: *** [cmTC_e306e/fast] Error 2
+
+File E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef aligned_alloc
+  return ((int*)(&aligned_alloc))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the posix_memalign exist failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_2ef63/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_2ef63.dir\build.make CMakeFiles/cmTC_2ef63.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2ef63.dir/CheckSymbolExists.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99   -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_2ef63.dir\CheckSymbolExists.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c: In function 'main':
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c:8:19: error: 'posix_memalign' undeclared (first use in this function)
+   return ((int*)(&posix_memalign))[argc];
+                   ^
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles\cmTC_2ef63.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_2ef63.dir/CheckSymbolExists.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_2ef63.dir/CheckSymbolExists.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_2ef63/fast' failed
+mingw32-make.exe: *** [cmTC_2ef63/fast] Error 2
+
+File E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef posix_memalign
+  return ((int*)(&posix_memalign))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the _controlfp exist failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_650af/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_650af.dir\build.make CMakeFiles/cmTC_650af.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_650af.dir/CheckSymbolExists.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99   -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_650af.dir\CheckSymbolExists.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c: In function 'main':
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c:8:19: error: '_controlfp' undeclared (first use in this function)
+   return ((int*)(&_controlfp))[argc];
+                   ^
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles\cmTC_650af.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_650af.dir/CheckSymbolExists.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_650af.dir/CheckSymbolExists.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_650af/fast' failed
+mingw32-make.exe: *** [cmTC_650af/fast] Error 2
+
+File E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef _controlfp
+  return ((int*)(&_controlfp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the __control87_2 exist failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_fb10b/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_fb10b.dir\build.make CMakeFiles/cmTC_fb10b.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fb10b.dir/CheckSymbolExists.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99   -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_fb10b.dir\CheckSymbolExists.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c: In function 'main':
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c:8:19: error: '__control87_2' undeclared (first use in this function)
+   return ((int*)(&__control87_2))[argc];
+                   ^
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles\cmTC_fb10b.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_fb10b.dir/CheckSymbolExists.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_fb10b.dir/CheckSymbolExists.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_fb10b/fast' failed
+mingw32-make.exe: *** [cmTC_fb10b/fast] Error 2
+
+File E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <float.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef __control87_2
+  return ((int*)(&__control87_2))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the include file dlfcn.h exists failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_71232/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_71232.dir\build.make CMakeFiles/cmTC_71232.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_71232.dir/CheckIncludeFile.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99   -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_71232.dir\CheckIncludeFile.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFile.c
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFile.c:1:19: fatal error: dlfcn.h: No such file or directory
+ #include <dlfcn.h>
+                   ^
+compilation terminated.
+CMakeFiles\cmTC_71232.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_71232.dir/CheckIncludeFile.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_71232.dir/CheckIncludeFile.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_71232/fast' failed
+mingw32-make.exe: *** [cmTC_71232/fast] Error 2
+
+
+Determining if the include file arm_neon.h exists failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_beab0/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_beab0.dir\build.make CMakeFiles/cmTC_beab0.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_beab0.dir/CheckIncludeFile.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99   -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_beab0.dir\CheckIncludeFile.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFile.c
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFile.c:1:22: fatal error: arm_neon.h: No such file or directory
+ #include <arm_neon.h>
+                      ^
+compilation terminated.
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_beab0.dir/CheckIncludeFile.c.obj] Error 1
+CMakeFiles\cmTC_beab0.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_beab0.dir/CheckIncludeFile.c.obj' failed
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+mingw32-make.exe: *** [cmTC_beab0/fast] Error 2
+Makefile:125: recipe for target 'cmTC_beab0/fast' failed
+
+
+Determining if files SLES/OpenSLES.h;SLES/OpenSLES_Android.h exist failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_fd9ff/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_fd9ff.dir\build.make CMakeFiles/cmTC_fd9ff.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fd9ff.dir/CheckIncludeFiles.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\gcc.exe   -std=c99   -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES   -o CMakeFiles\cmTC_fd9ff.dir\CheckIncludeFiles.c.obj   -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFiles.c
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckIncludeFiles.c:2:27: fatal error: SLES/OpenSLES.h: No such file or directory
+ #include <SLES/OpenSLES.h>
+                           ^
+compilation terminated.
+CMakeFiles\cmTC_fd9ff.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_fd9ff.dir/CheckIncludeFiles.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_fd9ff.dir/CheckIncludeFiles.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_fd9ff/fast' failed
+mingw32-make.exe: *** [cmTC_fd9ff/fast] Error 2
+
+Source:
+/* */
+#include <SLES/OpenSLES.h>
+#include <SLES/OpenSLES_Android.h>
+
+
+int main(void){return 0;}
+
+Determining if the Q_WS_X11 exist failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_5d861/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_5d861.dir\build.make CMakeFiles/cmTC_5d861.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_5d861.dir/CheckSymbolExists.cxx.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\g++.exe    -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES @CMakeFiles/cmTC_5d861.dir/includes_CXX.rsp   -o CMakeFiles\cmTC_5d861.dir\CheckSymbolExists.cxx.obj -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.cxx
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.cxx: In function 'int main(int, char**)':
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.cxx:8:19: error: 'Q_WS_X11' was not declared in this scope
+   return ((int*)(&Q_WS_X11))[argc];
+                   ^
+CMakeFiles\cmTC_5d861.dir\build.make:65: recipe for target 'CMakeFiles/cmTC_5d861.dir/CheckSymbolExists.cxx.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_5d861.dir/CheckSymbolExists.cxx.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_5d861/fast' failed
+mingw32-make.exe: *** [cmTC_5d861/fast] Error 2
+
+File E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <QtCore/qglobal.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef Q_WS_X11
+  return ((int*)(&Q_WS_X11))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the Q_WS_QWS exist failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_d6e51/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_d6e51.dir\build.make CMakeFiles/cmTC_d6e51.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_d6e51.dir/CheckSymbolExists.cxx.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\g++.exe    -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES @CMakeFiles/cmTC_d6e51.dir/includes_CXX.rsp   -o CMakeFiles\cmTC_d6e51.dir\CheckSymbolExists.cxx.obj -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.cxx
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.cxx: In function 'int main(int, char**)':
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.cxx:8:19: error: 'Q_WS_QWS' was not declared in this scope
+   return ((int*)(&Q_WS_QWS))[argc];
+                   ^
+CMakeFiles\cmTC_d6e51.dir\build.make:65: recipe for target 'CMakeFiles/cmTC_d6e51.dir/CheckSymbolExists.cxx.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_d6e51.dir/CheckSymbolExists.cxx.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_d6e51/fast' failed
+mingw32-make.exe: *** [cmTC_d6e51/fast] Error 2
+
+File E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <QtCore/qglobal.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef Q_WS_QWS
+  return ((int*)(&Q_WS_QWS))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the Q_WS_MAC exist failed with the following output:
+Change Dir: E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe" "cmTC_c5f11/fast"
+E:/simon/code/mingw482_32/mingw482_32/bin/mingw32-make.exe -f CMakeFiles\cmTC_c5f11.dir\build.make CMakeFiles/cmTC_c5f11.dir/build
+mingw32-make.exe[1]: Entering directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_c5f11.dir/CheckSymbolExists.cxx.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\g++.exe    -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGE_FILES @CMakeFiles/cmTC_c5f11.dir/includes_CXX.rsp   -o CMakeFiles\cmTC_c5f11.dir\CheckSymbolExists.cxx.obj -c E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.cxx
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.cxx: In function 'int main(int, char**)':
+E:\simon\code\gitCode\talkback\src\openal-build\CMakeFiles\CMakeTmp\CheckSymbolExists.cxx:8:19: error: 'Q_WS_MAC' was not declared in this scope
+   return ((int*)(&Q_WS_MAC))[argc];
+                   ^
+CMakeFiles\cmTC_c5f11.dir\build.make:65: recipe for target 'CMakeFiles/cmTC_c5f11.dir/CheckSymbolExists.cxx.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_c5f11.dir/CheckSymbolExists.cxx.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp'
+Makefile:125: recipe for target 'cmTC_c5f11/fast' failed
+mingw32-make.exe: *** [cmTC_c5f11/fast] Error 2
+
+File E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <QtCore/qglobal.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef Q_WS_MAC
+  return ((int*)(&Q_WS_MAC))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+

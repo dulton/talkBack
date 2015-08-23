@@ -1,0 +1,5 @@
+E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/OpenAL32.dir
+E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/openal-info.dir
+E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/common.dir
+E:/simon/code/gitCode/talkback/src/openal-build/CMakeFiles/makehrtf.dir
+E:/simon/code/gitCode/talkback/src/openal-build/utils/alsoft-config/CMakeFiles/alsoft-config.dir

@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+51c759742fd61b76d712ed98195489af utils/alsoft-config/moc_mainwindow.cxx
+ea55845888c0fdc013832d2622e86b94 utils/alsoft-config/ui_mainwindow.h

@@ -1,0 +1,2 @@
+E:\simon\code\mingw482_32\mingw482_32\bin\ar.exe cq libcommon.a  CMakeFiles/common.dir/common/atomic.c.obj CMakeFiles/common.dir/common/rwlock.c.obj CMakeFiles/common.dir/common/threads.c.obj CMakeFiles/common.dir/common/uintmap.c.obj
+E:\simon\code\mingw482_32\mingw482_32\bin\ranlib.exe libcommon.a
