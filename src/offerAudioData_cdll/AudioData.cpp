@@ -60,7 +60,7 @@ bool applyAudio(tagAudioContext *pContext, tagAudioCodeMode tCodeMode, AudioErro
 {
     OfferAudioData* pAudioContext=new OfferAudioData;
     if(pAudioContext->applyAudio(pContext->pUserContext,tCodeMode,pErrorCallback)){
-        pContext->pAudioDataContext=&pAudioContext;
+        pContext->pAudioDataContext=pAudioContext;
         return true;
     }else{
         //失败

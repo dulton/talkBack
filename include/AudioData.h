@@ -5,12 +5,12 @@
 extern "C" {
 #endif
 
-TalkbackAudioCapture_API  bool TALKBACKCALL checkClientIsSupportTalkback();
-TalkbackAudioCapture_API bool TALKBACKCALL checkIsSupportSpecAudioCode(tagAudioCodeMode tCodeMode);
-TalkbackAudioCapture_API int  TALKBACKCALL getSpecAudioCodeModeFrameBuffSize(tagAudioCodeMode tCodeMode);
-TalkbackAudioCapture_API bool TALKBACKCALL applyAudio(tagAudioContext *pContext,tagAudioCodeMode tCodeMode,AudioErrorCallback pErrorCallback);
-TalkbackAudioCapture_API bool TALKBACKCALL releaseAudio(tagAudioContext *pContext);
-TalkbackAudioCapture_API bool TALKBACKCALL getData(tagAudioContext *pContext, char *pBuff,int pBuffSize,int &nSize,talkback_int64 &nTimeStamp);
+TalkbackInterface_API  bool TALKBACKCALL checkClientIsSupportTalkback();
+TalkbackInterface_API bool TALKBACKCALL checkIsSupportSpecAudioCode(tagAudioCodeMode tCodeMode);
+TalkbackInterface_API int  TALKBACKCALL getSpecAudioCodeModeFrameBuffSize(tagAudioCodeMode tCodeMode);
+TalkbackInterface_API bool TALKBACKCALL applyAudio(tagAudioContext *pContext,tagAudioCodeMode tCodeMode,AudioErrorCallback pErrorCallback);
+TalkbackInterface_API bool TALKBACKCALL releaseAudio(tagAudioContext *pContext);
+TalkbackInterface_API bool TALKBACKCALL getData(tagAudioContext *pContext, char *pBuff,int pBuffSize,int &nSize,talkback_int64 &nTimeStamp);
 
 #if defined(__cplusplus)
 }
