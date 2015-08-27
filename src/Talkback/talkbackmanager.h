@@ -4,7 +4,7 @@
 #include "TalkBackDataTypeCommon.h"
 #include "talkbacklock.h"
 
-struct __tagTalkbackNode;
+struct TalkbackNode;
 class TalkbackManager
 {
 public:
@@ -22,8 +22,9 @@ public:
     bool removeDeviceFromTalkback(lpTalkbackContext parm);
 private:
     void clearTalkbackNodeList();
+    void removeDeviceFromTalkbackEx(lpTalkbackContext parm);
 private:
-    __tagTalkbackNode *m_pTalkbackNodeList;
+    TalkbackNode *m_pTalkbackNodeList;
     TalkbackLock m_tTalkbackNodeListLock;
 };
 

@@ -46,7 +46,7 @@ void TalkbackAudioDataCapture::initCapture()
     m_tThreadId=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)startCaptureThreadEx,(PVOID)this,0,NULL);
     ResumeThread(m_tThreadId);
 #else
-    pthread_create(&m_tThreadId,NULL,startCodeThread,this);
+    pthread_create(&m_tThreadId,NULL,startCaptureThreadEx,this);
 #endif
     INFO_PRINT("initCapture, start run audioDataCapture thread");
 }
@@ -68,6 +68,7 @@ void TalkbackAudioDataCapture::deinitCapture()
         m_tThreadId=0;
     }
 #endif
+    INFO_PRINT("deinitCapture thread end");
 }
 
 void TalkbackAudioDataCapture::addCodeToCapture(tagCapureContexInfo *pContexInfo)

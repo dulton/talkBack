@@ -227,7 +227,7 @@ void AudioCode::initAudio()
     m_tCodeThreadId = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)startCodeThreadEx, (PVOID)this, 0, NULL);
     // m_tCodeThreadId = CreateThread(NULL, 0, startCodeThread, (PVOID)this, 0, NULL);
 #else
-    pthread_create(&m_tCodeThreadId,NULL,startCodeThread,this);
+    pthread_create(&m_tCodeThreadId,NULL,startCodeThreadEx,this);
 #endif
 }
 

@@ -14,13 +14,19 @@ DEFINES += TALKBACK_LIBRARY
 SOURCES += talkback.cpp \
     talkbackmanager.cpp \
     ../common/talkbacklock.cpp \
-    talkbackcore.cpp
+    talkbackcore.cpp \
+    ../common/talkbackthread.cpp \
+    talkbackrtsp.cpp \
+    talkbackrtp.cpp
 
 HEADERS += talkback.h\
         talkback_global.h \
     talkbackmanager.h \
     ../common/talkbacklock.h \
-    talkbackcore.h
+    talkbackcore.h \
+    ../common/talkbackthread.h \
+    talkbackrtsp.h \
+    talkbackrtp.h
 
 unix {
     target.path = /usr/lib
