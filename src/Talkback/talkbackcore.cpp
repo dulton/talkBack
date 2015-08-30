@@ -180,37 +180,49 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
 
 bool TalkbackCore::talkbackCoreThreadStep_init()
 {
+    if(NULL!=m_pRtsp){
+        m_pRtsp->deinit();
+        delete m_pRtsp;
+        m_pRtsp=NULL;
+    }
+    if(NULL!=m_pRtp){
+        m_pRtp->deinit();;
+        delete m_pRtp;
+        m_pRtp=NULL;
+    }
+    m_pRtp=new TalkbackRtp;
+    m_pRtsp=new TalkbackRtsp;
 
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_setup_rtsp()
 {
-
+    return m_pRtsp->setup();
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_play_rtsp()
 {
-
+    return m_pRtsp->play();
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_init_rtp()
 {
-
+    return m_pRtp->init(m_pRtpInfo);
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_sendbuf_rtp()
 {
-
+    return m_pRtp->sendbuf();
 }
 
 void TalkbackCore::talkbackCoreThreadStep_teardown_rtsp()
 {
-
+    return m_pRtsp->teardown();
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_keepalive_rtsp()
 {
-
+    return m_pRtsp->keepalive();
 }
 
 bool TalkbackCore::isTimeToSendRtspKeepAlive()
@@ -219,6 +231,31 @@ bool TalkbackCore::isTimeToSendRtspKeepAlive()
 }
 
 bool TalkbackCore::isTimeToSendAudioBuffer()
+{
+    if(m_bStartTalkback){
+
+    }else{
+
+    }
+    return false;
+}
+
+void TalkbackCore::initRtspInfo()
+{
+
+}
+
+void TalkbackCore::deinitRtspInfo()
+{
+
+}
+
+void TalkbackCore::initRtpInfo()
+{
+
+}
+
+void TalkbackCore::deinitRtpInfo()
 {
 
 }

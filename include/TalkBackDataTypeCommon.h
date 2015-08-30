@@ -8,6 +8,11 @@
  #define TALKBACKCALL
 #endif
 
+#ifndef NULL
+#define NULL 0
+#endif
+
+
 typedef  enum __tagAudioCodeMode{
     AUDIO_CODE_G711_A=0,
     AUDIO_CODE_C711_U,
