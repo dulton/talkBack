@@ -25,6 +25,11 @@ private:
 
     bool isTimeToSendRtspKeepAlive();
     bool isTimeToSendAudioBuffer();
+
+    void initRtspInfo();
+    void deinitRtspInfo();
+    void initRtpInfo();
+    void deinitRtpInfo();
 private:
     volatile bool m_bThreadStop;
     TALKBACK_THREAD_HANDLE m_tThreadId;
@@ -32,6 +37,8 @@ private:
     lpTalkbackContext m_pTalkbackContext;
     TalkbackRtp *m_pRtp;
     TalkbackRtsp *m_pRtsp;
+    tagTalkbackRtspInfo *m_pRtspInfo;
+    tagTalkbackRtpInfo *m_pRtpInfo;
 };
 
 #endif // TALKBACKCORE_H
