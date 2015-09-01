@@ -196,10 +196,79 @@ ERR_EXIT:
     VLOG(VLOG_ERROR,"rtsp send packet(size:%d) failed.",m_pRtspInfo->payloadSize);
     return false;
 }
+static inline bool http_get_number(char *src,char *key,int *ret){
 
+}
 bool TalkbackRtsp::readRtspMessage()
 {
+    char *pEndPoint=m_pRtspInfo->payload;
+    int nRevice,nReadedSize=0,nExpectSize=1;
+    int nContext_len=0;
+    int nPacket_size=-1;
+    do{
+        if(nReadedSize+nExpectSize>RTSP_BUF_SIZE){
+            VLOG(VLOG_ERROR,"expect rtsp buffer size out of range,readed:%d expected:%d",nReadedSize,nExpectSize);
+            return false;
+        }
+        nRevice=recv(m_pRtspInfo->rtspSocket,pEndPoint,nExpectSize,0);
+        if(nReadedSize<0){
+            if(SOCK_ERR==SOCK_EINTR){
+                VLOG(VLOG_WARNING,"tcp recv error SOCK_EINTR");
+                continue;
+            }else if(SOCK_ERR==SOCK_EAGAIN){
+                VLOG(VLOG_ERROR,"tcp recv SOCK_EAGAIN in nonblocking mode");
+                return false;
+            }else if(SOCK_ERR==SOCK_ETIMEOUT){
+                VLOG(VLOG_ERROR,"tcp recv time out");
+                return false;
+            }else{
+                VLOG(VLOG_ERROR,"tcp recv unkonw error :@%d ###",SOCK_ERR);
+                return false;
+            }
+        }else if(nRevice==0){
+            VLOG(VLOG_DEBUG,"network is shutdown by peer");
+            return false;
+        }else{
+            //keep going
+        }
+        pEndPoint[nRevice]=0;
+        nReadedSize+=nRevice;
+        VLOG(VLOG_DEBUG,"nRevice:%d,nReadedSize:%d,nExpectSize:%d,nPacket_size:%d,nContext_len:%d",
+             nRevice,nReadedSize,nExpectSize,nPacket_size,nContext_len);
+        if(nReadedSize==nPacket_size){
+            break;
+        }
+        if(m_pRtspInfo->payload[0]==RTSP_INTERLEAVED_MAGIC){
+            RtspInterHeader_t *pInterHeader=NULL;
+            if(nReadedSize<sizeof(RtspInterHeader_t)){
+                nExpectSize=sizeof(RtspInterHeader_t)-nReadedSize;
+            }else{
+                pInterHeader=(RtspInterHeader_t *)m_pRtspInfo->payload;
+                nPacket_size=ntohs(pInterHeader->length)+sizeof(RtspInterHeader_t);
+                if(nReadedSize<nPacket_size){
+                    nExpectSize=nPacket_size=nReadedSize;
+                }else if(nReadedSize==nPacket_size){
+                    break;
+                }else{
+                    VLOG(VLOG_ERROR,"ocurr unhandle error,please check it");
+                    return false;
+                }
+            }
+        }else if((unsigned char )m_pRtspInfo->payload[0]>=0x81){// zhongwei NVR specific heartbreak
+            nPacket_size=20;
+            nExpectSize=nPacket_size-nReadedSize;
+        }else{//rtsp message
 
+        }
+        pEndPoint+=nRevice;
+    }while(1);
+    m_pRtspInfo->payload[nReadedSize]=0;
+    m_pRtspInfo->payloadSize=nReadedSize;
+    VLOG(VLOG_DEBUG,"read rtsp packet done,size:%d",nReadedSize);
+    if(m_pRtspInfo->payload[0]!=RTSP_INTERLEAVED_MAGIC){
+        VLOG(VLOG_DEBUG,"payload:\r\n:%s",m_pRtspInfo->payload);
+    }
+    return true;
 }
 
 bool TalkbackRtsp::parseRtspResponse(int *statusCode, char *info)
