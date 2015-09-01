@@ -2,6 +2,8 @@
 #define TALKBACKRTSP_H
 #include "sock.h"
 #include "talkbackrtspdef.h"
+#include "sdplib.h"
+#include "authentication.h"
 typedef struct __tagTalkbackRtspInfo{
     char    userName[256];
     char    passWord[256];
@@ -13,6 +15,16 @@ typedef struct __tagTalkbackRtspInfo{
     char    payload[RTSP_BUF_SIZE +1];
     int     payloadSize;
     int     cseq;
+    int     bLogin;		// login success or not
+    char    allow_method[128];
+    char    agent[128];
+    SessionDesc_t *sdp;
+    char    session_id[32];
+    uint32_t session_timeout;
+
+    unsigned int rtpseq;
+    unsigned int rtptime;
+    Authentication_t *auth;
 }tagTalkbackRtspInfo;
 class TalkbackRtsp
 {
