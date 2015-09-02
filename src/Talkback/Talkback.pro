@@ -40,7 +40,9 @@ HEADERS += talkback.h\
     ../common/sdplib.h \
     ../common/_base64.h \
     ../common/authentication.h \
-    ../common/_md5.h
+    ../common/_md5.h \
+    talkbackRtpDef.h \
+    talkbackRtcpDef.h
 
 unix {
     target.path = /usr/lib

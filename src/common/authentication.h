@@ -9,7 +9,7 @@ extern "C" {
 #define AUTH_RET_FAIL	(-1)
 
 
-#define HTTP_AUTH_REALM		"www.dvr163.com"
+#define HTTP_AUTH_REALM		"www.baidu.com"
 
 #define HTTP_AUTH_BASIC		(0)
 #define HTTP_AUTH_DIGEST	    (1)

@@ -4,7 +4,7 @@
 #include "TalkBackDataTypeCommon.h"
 
 #include "TalkBackCommonTool.h"
-
+#include "talkbackRtpDef.h"
 
 TalkbackRtsp::TalkbackRtsp():m_pRtspInfo(NULL)
 {
@@ -243,12 +243,277 @@ bool TalkbackRtsp::talkbackRtspSetup_option()
 
 bool TalkbackRtsp::talkbackRtspSetup_describe()
 {
-
+    int nStatusCode;
+    char temp[256];
+    char url[200];
+    char szAuth[512];
+    bool bAuthFlag=false;
+    const char format1[]=
+            "DESCRIBE %s %s\r\n"\
+            "CSeq: %d\r\n"\
+            "User-Agent: %s\r\n"\
+            "Accept: %s\r\n"\
+            "\r\n";
+    const char format2[]=
+            "DESCRIBE %s %s\r\n"\
+            "CSeq: %d\r\n"\
+            "User-Agent: %s\r\n"\
+            "Accept: %s\r\n"\
+            "Authorization: %s\r\n"\
+            "\r\n";
+    __TRY_AGAIN:
+    sprintf(temp,"rtsp://%s:%d/%s",m_pRtspInfo->ip,m_pRtspInfo->nPort,m_pRtspInfo->streamName);
+    if(m_pRtspInfo->bLogin==true){
+        sprintf(m_pRtspInfo->payload,format1,temp,RTSP_VERSION,++m_pRtspInfo->cseq,RTSP_USER_AGENT,SDP_MEDIA_TYPE);
+    }else{
+        sprintf(url,"rtsp://%s:%d/%s",m_pRtspInfo->ip,m_pRtspInfo->nPort,m_pRtspInfo->streamName);
+        if(HTTP_AUTH_setup(m_pRtspInfo->auth,m_pRtspInfo->userName,m_pRtspInfo->passWord,url,"DESCRIBE",szAuth,sizeof(szAuth))==AUTH_RET_FAIL){
+            return false;
+        }
+        sprintf(m_pRtspInfo->payload,format2,temp,RTSP_VERSION,++m_pRtspInfo->cseq,RTSP_USER_AGENT,SDP_MEDIA_TYPE,szAuth);
+    }
+    m_pRtspInfo->payloadSize=strlen(m_pRtspInfo->payload);
+    VLOG(VLOG_DEBUG,"request (size:%d) :\r\n %s \r\n",m_pRtspInfo->payloadSize,m_pRtspInfo->payload);
+    if(sendRtspPacket()==false){
+        return false;
+    }
+    if(readRtspMessage()==false){
+        return false;
+    }
+    if(parseRtspResponse(&nStatusCode,temp)==false){
+        return false;
+    }
+    if((nStatusCode==rtspRStatusCodes[RTSP_RSC_UNAUTHORIZED].code)&&bAuthFlag==false){
+        VLOG(VLOG_DEBUG,"require auth !!!");
+        bAuthFlag=true;
+        //此处可以设置回调函数从外界 获取 用户名和密码,暂时不实现
+        goto __TRY_AGAIN;
+    }else if(nStatusCode==rtspRStatusCodes[RTSP_RSC_UNAUTHORIZED].code){
+        VLOG(VLOG_ERROR,"auth failed !!!");
+        //可以设置回调告知外界，用户验证失败
+        return false;
+    }
+    return true;
 }
 
 bool TalkbackRtsp::talkbackRtspSetup_setup()
 {
+    int iSetupMedia=0;
+    Attribute_t attr;
+    int real_type=0;
+    for(int i=0;i<m_pRtspInfo->sdp->media_num;i++){
+        if(0==strcmp(m_pRtspInfo->sdp->media[i].media_n.type,"audio")){
+            if(0==(m_pRtspInfo->stream_type&RTSP_STREAM_AUDIO)){
+                VLOG(VLOG_DEBUG,"miss the audio as stream type do not support: %d",m_pRtspInfo->stream_type);
+                continue;
+            }
+            if(m_pRtspInfo->sdp->media[i].media_n.format==0||
+                    m_pRtspInfo->sdp->media[i].media_n.format==8){//pcma or pcmu
+                if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[i].media_n.type,
+                                      SDP_ATTR_CONTROL,(void*)&attr)==RTSP_RET_FAIL){
+                    VLOG(VLOG_ERROR,"get media audio attr fail");
+                    continue;
+                }
+                real_type=m_pRtspInfo->sdp->media[i].media_n.format;
+                if(false==requestSeup(attr.value,m_pRtspInfo->sdp->media[i].media_n.type,
+                                      m_pRtspInfo->sdp->media[i].media_n.format,real_type)){
+                    VLOG(VLOG_ERROR,"setup audio fail");
+                    goto CONNECT_ERR_EXIT;
+                }
+                iSetupMedia++;
+            }else if(m_pRtspInfo->sdp->media[i].media_n.format>=96
+                     ||m_pRtspInfo->sdp->media[i].media_n.format==20
+                     ||m_pRtspInfo->sdp->media[i].media_n.format==21
+                     ||m_pRtspInfo->sdp->media[i].media_n.format==22
+                     ||m_pRtspInfo->sdp->media[i].media_n.format==23){
+                // 20 ~ 23 , unsigned payload type
+                // >= 96: dynamic payload type , need to get detail media type by rtpmap attribute
+                if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[i].media_n.type,
+                                      SDP_ATTR_RTP_MAP,(void*)&attr)==RTSP_RET_OK){
+                    if(strncmp(attr.rtpmap.codec_type,"PCMU",strlen("PCMU"))==0||
+                       strncmp(attr.rtpmap.codec_type,"PCMA",strlen("PCMA"))==0){
+                        if(strncmp(attr.rtpmap.codec_type,"PCMA",strlen("PCMA"))==0){
+                            real_type=RTP_TYPE_PCMA;
+                        }else{
+                            real_type=RTP_TYPE_PCMU;
+                        }
+                        if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[i].media_n.type,
+                                              SDP_ATTR_CONTROL,(void *)&attr)==RTSP_RET_FAIL){
+                            VLOG(VLOG_DEBUG,"get media SDP_ATTR_CONTROL attr fail");
+                            continue;
+                        }
+                        if(requestSeup(attr.value,m_pRtspInfo->sdp->media[i].media_n.type,
+                                       m_pRtspInfo->sdp->media[i].media_n.format,real_type)==RTSP_RET_FAIL){
+                            VLOG(VLOG_ERROR,"setup audio fail");
+                            goto CONNECT_ERR_EXIT;
+                        }
+                        iSetupMedia++;
+                    }else{
+                        VLOG(VLOG_DEBUG,"unknown audio codec type:%s",attr.rtpmap.codec_type);
+                        continue;
+                    }
+                }else{
+                    VLOG(VLOG_DEBUG,"get media SDP_ATTR_RTP_MAP attr fail");
+                    continue;
+                }
+            }else{
+                VLOG(VLOG_WARNING,"unknown audio type:%d",m_pRtspInfo->sdp->media[i].media_n.format);
+            }
+        }else if(0==strcmp(m_pRtspInfo->sdp->media[i].media_n.type,"video")){
+            VLOG(VLOG_DEBUG,"ignore video media type");
+            continue;
+        }else{
+            VLOG(VLOG_WARNING,"unknown media type: %s",m_pRtspInfo->sdp->media[i].media_n.type);
+        }
+    }
+    if(iSetupMedia==0){
+        goto CONNECT_ERR_EXIT;
+    }
+    return true;
+CONNECT_ERR_EXIT:
+    return false;
+}
 
+bool TalkbackRtsp::requestSeup(char *control, char *media_type, int type, int real_type)
+{
+    char temp[256];
+    char temp2[256];
+    char stream_url[128];
+    char *ptr = NULL;
+    int nStatus_code;
+    Rtp_t **rtp=NULL;
+    Rtcp_t **rtcp = NULL;
+    unsigned int chn_port_tmp = 0;
+    SOCK_t rtp_sock;
+    int rtp_chn_port=0,rtcp_chn_port = 0;
+    const char format[]=
+            "SETUP %s %s\r\n"\
+            "CSeq: %d\r\n"\
+            "User-Agent: %s\r\n"\
+            "Transport: %s\r\n"\
+            "\r\n";
+    const char format2[]=
+            "SETUP %s %s\r\n"\
+            "CSeq: %d\r\n"\
+            "User-Agent: %s\r\n"\
+            "Transport: %s\r\n"\
+            "Session: %s\r\n"\
+            "\r\n";
+    if(m_pRtspInfo->transport==RTP_AUTO){
+#if RTSP_RTP_DEF_TRANSPORT==RTSP_RTP_OVER_RTSP
+        m_pRtspInfo->b_interleavedMode=RTSP_RTP_OVER_RTSP;
+        m_pRtspInfo->low_transport=RTP_TRANSPORT_TCP;
+#else
+        m_pRtspInfo->b_interleavedMode=RTSP_RTP_OVER_UDP;
+        m_pRtspInfo->low_transport=RTP_TRANSPORT_UDP;
+#endif
+    }else if(m_pRtspInfo->transport==RTP_UDP){
+        m_pRtspInfo->low_transport=RTP_TRANSPORT_UDP;
+        m_pRtspInfo->b_interleavedMode=RTSP_RTP_OVER_UDP;
+    }else{
+        m_pRtspInfo->low_transport=RTP_TRANSPORT_TCP;
+        m_pRtspInfo->b_interleavedMode=RTSP_RTP_OVER_RTSP;
+    }
+    strncpy(stream_url,m_pRtspInfo->streamName,sizeof(stream_url)-1);
+    if ((ptr = strstr(stream_url, "?")) != NULL) {
+        *ptr = '\0';
+    }
+TRY_INTERLEAVED_MODE:
+    if(memcmp(control,"rtsp://",strlen("rtsp://"))==0){
+        sprintf(temp,"%s",control);
+    }else{
+        sprintf(temp,"rtsp://%s:%d/%s/%s",m_pRtspInfo->ip,m_pRtspInfo->nPort,stream_url,control);
+    }
+    if(m_pRtspInfo->b_interleavedMode==true){
+        if(0==strcmp(media_type,"audio")){
+            m_pRtspInfo->channel=2;
+        }else{
+            m_pRtspInfo->channel=0;
+        }
+        m_pRtspInfo->client_port=m_pRtspInfo->channel;
+        m_pRtspInfo->server_port=m_pRtspInfo->channel;
+    }else{
+        portManage_apply2_port3(&chn_port_tmp);
+        m_pRtspInfo->client_port=chn_port_tmp;
+    }
+    rtsp_setup_transport(temp2);
+    if(m_pRtspInfo->session_id[0]==0){
+        sprintf(m_pRtspInfo->payload,format,temp,RTSP_VERSION,
+                ++m_pRtspInfo->cseq,
+                RTSP_USER_AGENT,
+                temp2);
+    }else{
+        sprintf(m_pRtspInfo->passWord,format2,temp,RTSP_VERSION,
+                ++m_pRtspInfo->cseq,
+                RTSP_USER_AGENT,
+                temp2,
+                m_pRtspInfo->session_id);
+    }
+    m_pRtspInfo->payloadSize=strlen(m_pRtspInfo->payload);
+    VLOG(VLOG_DEBUG,"request (size :%d):\r\n%s\r\n",m_pRtspInfo->payloadSize,m_pRtspInfo->payload);
+    if(sendRtspPacket()==false){
+        return false;
+    }
+    if(readRtspMessage()==false){
+        return false;
+    }
+    if(parseRtspResponse(&nStatus_code,temp)==false){
+        if(nStatus_code==RTSP_RSC_UNSUPPORTED_TRANSPORT){
+            VLOG(VLOG_ERROR,"server do not support udp transport,and client do not support tcp transport");
+        }else{
+            VLOG(VLOG_ERROR,"set up fail (nstatus_code:%d)",nStatus_code);
+        }
+        return false;
+    }
+    if(0==strcmp(media_type,"audio")){
+        rtp=(Rtp_t **)(&m_pRtspInfo->rtp_audio);
+        rtcp=(Rtcp_t **)(&m_pRtspInfo->rtcp_audio);
+    }else if(0==strcmp(media_type,"video")){
+        rtp=(Rtp_t **)(&m_pRtspInfo->rtp_video);
+        rtcp=(Rtcp_t**)(&m_pRtspInfo->rtcp_video);
+    }else{
+        VLOG(VLOG_ERROR,"setup:unsuport payload type:%s  -%d",media_type,type);
+        return false;
+    }
+    VLOG(VLOG_DEBUG,"%s setup :c_port:%d,s_port:%d",control,m_pRtspInfo->client_port,m_pRtspInfo->server_port);
+    if(m_pRtspInfo->b_interleavedMode){
+        if((m_pRtspInfo->channel%2)==0){
+            rtp_chn_port=m_pRtspInfo->channel;
+            rtcp_chn_port=m_pRtspInfo->channel+1;
+        }else{
+            rtp_chn_port=m_pRtspInfo->channel+1;
+            rtcp_chn_port=m_pRtspInfo->channel;
+        }
+        rtp_sock=m_pRtspInfo->rtspSocket;
+    }else{
+        if((m_pRtspInfo->server_port%2)==0){
+            rtp_chn_port=m_pRtspInfo->server_port;
+            rtcp_chn_port=m_pRtspInfo->server_port+1;
+        }else{
+            rtp_chn_port=m_pRtspInfo->server_port+1;
+            rtcp_chn_port=m_pRtspInfo->server_port;
+        }
+        rtp_sock=SOCK_udp_init(NULL,m_pRtspInfo->client_port,RTSP_SOCK_TIMEOUT);
+        if(-1==rtp_sock){
+            VLOG(VLOG_ERROR,"setup request fail as SOCK_udp_init fail:(port:%d)",m_pRtspInfo->client_port);
+            return false;
+        }
+    }
+    /*
+    *rtp=rtp_client_new(m_pRtspInfo->low_transport,m_pRtspInfo->b_interleavedMode,rtp_sock,type,real_type,
+                        m_pRtspInfo->peername,rtp_chn_port,m_pRtspInfo->buffer_time);*/
+    if(NULL==*rtp){
+        VLOG(VLOG_ERROR,"setup fail as rtp_client_new fail");
+        return false;
+    }
+    int nRet=rtcp_init(rtcp,m_pRtspInfo->role,m_pRtspInfo->ssrc,m_pRtspInfo->low_transport,
+                       m_pRtspInfo->cast_type,m_pRtspInfo->b_interleavedMode,m_pRtspInfo->rtspSocket,
+                       rtcp_chn_port,m_pRtspInfo->client_port+1,*rtp);
+    if(nRet==RTSP_RET_FAIL){
+        VLOG(VLOG_ERROR,"setup fail as rtcp_init fail");
+        return false;
+    }
+    return true;
 }
 
 bool TalkbackRtsp::sendRtspPacket()
@@ -498,6 +763,9 @@ bool TalkbackRtsp::parseRtspResponse(int *statusCode, char *info)
         }
         VLOG(VLOG_DEBUG,"\t session id:%s",m_pRtspInfo->session_id);
     }
+    if(http_get_string(m_pRtspInfo->payload,"Transport:",temp)==true){
+        parseRtspTransport(temp);
+    }
     if(http_get_string(m_pRtspInfo->payload,"RTP-Info:",temp)==true){
         if((ptrRtp=strstr(temp,"seq="))!=NULL){
             ptrRtp+=strlen("seq=");
@@ -522,6 +790,159 @@ bool TalkbackRtsp::parseRtspResponse(int *statusCode, char *info)
     }
     VLOG(VLOG_DEBUG,"parse response success");
     return true;
+}
+
+bool TalkbackRtsp::parseRtspTransport(char *buf)
+{
+    char transport[128];
+    *buf=0;
+    char *pTransport=transport;
+    char *pTemp;
+    if(http_get_string(m_pRtspInfo->payload,"Transport:",transport)==false){
+        return false;
+    }
+
+    if((pTemp=strstr(pTransport,"RTP/AVP/TCP"))!=NULL){
+        m_pRtspInfo->low_transport=RTP_TRANSPORT_TCP;
+        strcat(buf,"RTP/AVP/TCP");
+    }else{
+        strcat(buf,"RTP/AVP/UDP");
+        m_pRtspInfo->low_transport=RTP_TRANSPORT_UDP;
+    }
+
+    if((pTemp=strstr(pTransport,"multicast"))!=NULL){
+        m_pRtspInfo->cast_type=RTP_MULTICAST;
+        strcat(buf,";multicast");
+    }else{
+        m_pRtspInfo->cast_type=RTP_UNICAST;
+        strcat(buf,";unicast");
+    }
+
+    if((pTemp=strstr(pTransport,"interleaved"))!=NULL){
+        m_pRtspInfo->b_interleavedMode=true;
+        pTemp+=strlen("interleaved=");
+        sscanf(pTemp,"%d%*s",&m_pRtspInfo->channel);
+        pTemp=buf+strlen(buf);
+        sprintf(pTemp,";interleaved=%d-%d",m_pRtspInfo->channel,m_pRtspInfo->channel+1);
+        m_pRtspInfo->client_port=m_pRtspInfo->channel;
+        m_pRtspInfo->server_port=m_pRtspInfo->channel;
+    }else{
+        m_pRtspInfo->b_interleavedMode=false;
+        if((pTemp=strstr(pTransport,"client_port"))!=NULL){
+            pTemp+=strlen("client_port=");
+            printf("pTemp:%s \n",pTemp);
+            sscanf(pTemp,"%d%*s",&m_pRtspInfo->client_port);
+        }
+        if((pTemp=strstr(pTransport,"server_port"))!=NULL){
+            pTemp+=strlen("server_port=");
+            sscanf(pTemp,"%d%*s",m_pRtspInfo->server_port);
+        }
+        pTemp=buf+strlen(buf);
+        sprintf(pTemp,";client_port=%d-%d;server_port=%d-%d",
+                m_pRtspInfo->client_port,m_pRtspInfo->client_port+1,m_pRtspInfo->server_port,m_pRtspInfo->server_port+1);
+    }
+    if(m_pRtspInfo->role==RTSP_SERVER){
+        pTemp=buf+strlen(buf);
+        sprintf(pTemp,";ssrc=%x",m_pRtspInfo->streamName);
+    }else{
+        if((pTemp=strstr(pTransport,"ssrc="))!=NULL){
+            pTemp+=strlen("ssrc=");
+            sscanf(pTemp,"%x%*s",&m_pRtspInfo->ssrc);
+        }else{
+            m_pRtspInfo->ssrc=0;
+        }
+    }
+    if((pTemp=strstr(pTransport,"mode"))!=NULL){
+        pTemp+=strlen("mode=\"");
+        if(strcmp(pTemp,"PLAY")==0){
+            m_pRtspInfo->work_mode=RTSP_MODE_PLAY;
+            strcat(buf,";mode=\"PLAY\"");
+        }else if(strcmp(pTemp,"RECODE")){
+            m_pRtspInfo->work_mode=RTSP_MODE_RECORD;
+            strcat(buf,";mode=\"RECORD\"");
+        }
+    }
+    VLOG(VLOG_DEBUG,"parse transport:client_port:%d server_port:%d,%s",
+    m_pRtspInfo->client_port,m_pRtspInfo->server_port,m_pRtspInfo->cast_type ? "multicast" : "unicast");
+    VLOG(VLOG_DEBUG,"Transport: %s",buf);
+    return true;
+}
+
+bool TalkbackRtsp::rtsp_setup_transport(char *buf)
+{
+    char *pTemp=buf;
+    if(m_pRtspInfo->low_transport==RTP_TRANSPORT_TCP){
+        sprintf(pTemp,"RTP/AVP/TCP");
+    }else{
+        sprintf(pTemp,"RTP/AVP");
+    }
+    pTemp=buf+strlen(buf);
+    if(m_pRtspInfo->cast_type==RTP_MULTICAST){
+        sprintf(pTemp,";multicast");
+    }else{
+        sprintf(pTemp,";unicast");
+    }
+    pTemp=buf+strlen(buf);
+    if(m_pRtspInfo->b_interleavedMode==true){
+        sprintf(pTemp,";interleaved=%d-%d",m_pRtspInfo->channel,m_pRtspInfo->channel+1);
+    }else{
+        sprintf(pTemp,";client_port=%d-%d",m_pRtspInfo->client_port,m_pRtspInfo->client_port+1);
+    }
+    return true;
+}
+
+uint32_t TalkbackRtsp::hash_string(char *str)
+{
+#define HASHWORDBITS	(32)
+    uint32_t hval=0xFFFFFFFF,g;
+    char *pstr=str;
+    while(*str){
+        hval <<=4;
+        hval += (unsigned char)*str++;
+        g = hval & ((unsigned int)0xf << (HASHWORDBITS -4));
+        if(g != 0){
+            hval ^= g >> (HASHWORDBITS - 8);
+            hval ^= g;
+        }
+    }
+
+    VLOG(VLOG_DEBUG,"string:%s hashval:%x",pstr,hval);
+    return hval;
+}
+
+int TalkbackRtsp::portManage_apply2_port3(unsigned int * const port)
+{
+
+}
+
+int TalkbackRtsp::portManage_apply1_port3(unsigned int * const port)
+{
+
+}
+
+Rtp_t *TalkbackRtsp::rtp_client_new(int interleaved, int sock, int payloadType, int mediaType, char *dstip, int dstport, int buffer_time)
+{
+
+}
+
+Rtp_t *TalkbackRtsp::rtp_server_new(unsigned int ssrc, int payloadType, int protocal, int interleaved, int sock, char *dstip, int dstport)
+{
+
+}
+
+int TalkbackRtsp::rtp_destroy(Rtp_t *rtp)
+{
+
+}
+
+int TalkbackRtsp::rtcp_init(Rtcp_t **r, int role, uint32_t src_id, int protocal, int cast_type, int interleaved, int rtsp_sock, int chn_port_s, int chn_port_c, Rtp_t *rtp)
+{
+
+}
+
+int TalkbackRtsp::rtcp_destroy(Rtcp_t *rtcp)
+{
+
 }
 
 

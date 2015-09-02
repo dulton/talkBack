@@ -4,10 +4,14 @@
 #include "talkbackrtspdef.h"
 #include "sdplib.h"
 #include "authentication.h"
+#include "talkbackRtcpDef.h"
+#include "talkbackRtpDef.h"
+
 typedef struct __tagTalkbackRtspInfo{
+    int     role;//client ,server
     char    userName[256];
     char    passWord[256];
-    int     nPort;
+    int     nPort;//目标端口
     char    url[256];
     char    ip[20];
     char    streamName[128];
@@ -25,6 +29,27 @@ typedef struct __tagTalkbackRtspInfo{
     unsigned int rtpseq;
     unsigned int rtptime;
     Authentication_t *auth;
+
+    int stream_type; // invalid for rtsp player
+
+    char peername[20];
+    int buffer_time;//unit : ms, only valid for rtsp player
+    int low_transport;	// udp or tcp
+    int cast_type; //unicast or multicast
+    int b_interleavedMode;//是否使用 rtsp/rtp混合模式
+    int client_port;//rtp 端口
+    int server_port;//对方端口
+    int channel;
+    uint32_t ssrc;
+    int work_mode;//record or play
+
+    enRTP_TRANSPORT transport;
+
+    Rtp_t *rtp_video;
+    Rtp_t *rtp_audio;
+    Rtcp_t *rtcp_audio;
+    Rtcp_t *rtcp_video;
+
 }tagTalkbackRtspInfo;
 class TalkbackRtsp
 {
@@ -42,9 +67,38 @@ private:
     bool talkbackRtspSetup_option();
     bool talkbackRtspSetup_describe();
     bool talkbackRtspSetup_setup();
-    bool sendRtspPacket();
-    bool readRtspMessage();
-    bool parseRtspResponse(int *statusCode,char *info);
+
+    bool requestSeup(char *control,char *media_type,int type,int real_type);//发送 setup 请求
+
+    bool sendRtspPacket();//发送 rtsp 包
+    bool readRtspMessage();//接受 rtsp 包
+    bool parseRtspResponse(int *statusCode,char *info);//解析rtsp 包
+
+    bool parseRtspTransport(char *buf);//解析 transport 字段
+
+    bool rtsp_setup_transport(char *buf);//打包 transport 字段
+
+    uint32_t hash_string(char *str);
+    //申请可用端口
+    int portManage_apply2_port3(unsigned int * const port);
+    int portManage_apply1_port3(unsigned int * const port);
+    // rtp
+    Rtp_t *rtp_client_new(int interleaved,int sock,int payloadType,int mediaType,char *dstip,int dstport,int buffer_time);
+    Rtp_t *rtp_server_new(unsigned int ssrc,int payloadType,int protocal,int interleaved,int sock,char *dstip,int dstport);
+    int rtp_destroy(Rtp_t *rtp);
+    //rtcp
+    int rtcp_init(Rtcp_t**r,
+                  int role,//act as client or server
+                  uint32_t src_id,//src id
+                  int protocal,//udp or tcp
+                  int cast_type,//unicast or multicast
+                  int interleaved,//true ro false
+                  int rtsp_sock,// if interleaved, rtp sock user this
+                  int chn_port_s,//rtp port or channel if in in interleaved mode
+                  int chn_port_c,
+                  Rtp_t *rtp
+                  );
+    int rtcp_destroy(Rtcp_t *rtcp);
 private:
     tagTalkbackRtspInfo *m_pRtspInfo;
 };
