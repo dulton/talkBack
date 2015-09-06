@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "AudioData.h"
+#include "TalkbackCInterface.h"
 #include<QDebug>
 #include <QTime>
 #include <QDateTime>
@@ -48,8 +49,8 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::on_pushButton_4_clicked()
 {
     //audioDevice
-    bool bRet=checkClientIsSupportTalkback();
-    qDebug()<<__func__<<__LINE__<<"checkClientIsSupportTalkback:"<<bRet;
+    bool bRet=checkClientIsSupportMicrophone();
+    qDebug()<<__func__<<__LINE__<<"checkClientIsSupportMicrophone:"<<bRet;
     return;
 }
 long long g_nTime=0;
@@ -74,4 +75,29 @@ void MainWindow::on_get_buff()
             bRet=false;
         }
     }
+}
+
+void MainWindow::on_startTalkback_clicked()
+{
+
+}
+
+void MainWindow::on_checkClientIsSupportTalkback_clicked()
+{
+
+}
+
+void MainWindow::on_pauseTalkback_clicked()
+{
+
+}
+
+void MainWindow::on_addDeviceToTalkback_clicked()
+{
+
+}
+
+void MainWindow::on_removeDeviceFromTalkback_clicked()
+{
+
 }

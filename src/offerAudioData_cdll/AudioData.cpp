@@ -6,7 +6,7 @@
 
 
 
-bool checkClientIsSupportTalkback()
+bool checkClientIsSupportMicrophone()
 {
     return OfferAudioData::checkClientIsSupportTalkback();
 }
