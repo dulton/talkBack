@@ -150,4 +150,35 @@ void TalkbackManager::removeDeviceFromTalkbackEx(lpTalkbackContext parm)
         return ;
     }
     //fix me
+    //第一步，移除非链表头的节点
+    //第二步，判断链表头，是否需要移除
+    TalkbackNode *pTempHead=m_pTalkbackNodeList;
+    TalkbackNode *pTempNext=m_pTalkbackNodeList->pNext;
+    while(NULL!=pTempNext){
+        if(pTempNext->pTalkbackContext==parm){
+            //find
+            TalkbackNode *pRemove=pTempNext;
+            if(pRemove->pTalkbackCore!=NULL){
+                pRemove->pTalkbackCore->deinitTalkback();
+                delete pRemove->pTalkbackCore;
+            }
+            pTempNext= pTempNext->pNext;
+            pTempHead->pNext=pTempNext;
+            delete pRemove;
+        }else{
+            //keep going
+            pTempNext=pTempNext->pNext;
+            pTempHead= pTempHead->pNext;
+        }
+    }
+    if(m_pTalkbackNodeList->pTalkbackContext==parm){
+        TalkbackNode *pRemove=m_pTalkbackNodeList;
+        m_pTalkbackNodeList=pRemove->pNext;
+        if(NULL!=pRemove->pTalkbackCore){
+            pRemove->pTalkbackCore->deinitTalkback();
+            delete pRemove;
+        }
+        delete pRemove;
+    }
+
 }

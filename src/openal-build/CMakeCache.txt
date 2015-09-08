@@ -126,7 +126,6 @@ CMAKE_AR:FILEPATH=E:/simon/code/mingw482_32/mingw482_32/bin/ar.exe
 // CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.
 CMAKE_BUILD_TYPE:STRING=Debug
 
-
 //The CodeBlocks executable
 CMAKE_CODEBLOCKS_EXECUTABLE:FILEPATH=CMAKE_CODEBLOCKS_EXECUTABLE-NOTFOUND
 

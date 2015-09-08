@@ -334,7 +334,7 @@ TALKBACK_THREAD_RET_TYPE TalkbackAudioDataCapture::startCodeThread(void *arg){
 
 bool TalkbackAudioDataCapture::reCheckClientIsSupportTalkback()
 {
-    TalkbackThread::mSleep(50);
+    TalkbackThread::mSleep(100);
     if(m_bThreadStop==false){
         return m_bClientIsSupportTalkback;
     }else{

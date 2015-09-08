@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include "TalkbackCInterface.h"
 namespace Ui {
 class MainWindow;
 }
@@ -37,6 +38,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QTimer m_tTime;
+    tagTalkbackContext *m_pTalkbackContext;
 };
 
 #endif // MAINWINDOW_H
