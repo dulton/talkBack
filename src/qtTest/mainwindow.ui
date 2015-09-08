@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>606</width>
+    <height>522</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,14 +17,14 @@
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>80</x>
+      <x>64</x>
       <y>40</y>
-      <width>75</width>
+      <width>91</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>start</string>
+     <string>startCapture</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_2">
@@ -37,15 +37,15 @@
      </rect>
     </property>
     <property name="text">
-     <string>stop</string>
+     <string>stopCapture</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_3">
     <property name="geometry">
      <rect>
-      <x>80</x>
-      <y>100</y>
-      <width>75</width>
+      <x>64</x>
+      <y>70</y>
+      <width>91</width>
       <height>23</height>
      </rect>
     </property>
@@ -57,13 +57,88 @@
     <property name="geometry">
      <rect>
       <x>220</x>
-      <y>100</y>
-      <width>75</width>
+      <y>70</y>
+      <width>111</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
      <string>audiodeviceTest</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="startTalkback">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>130</y>
+      <width>141</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>startTalkback</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pauseTalkback">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>160</y>
+      <width>141</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>pauseTalkback</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="checkClientIsSupportTalkback">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>130</y>
+      <width>191</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>checkClientIsSupportTalkback</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="addDeviceToTalkback">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>160</y>
+      <width>191</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>addDeviceToTalkback</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="removeDeviceFromTalkback">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>200</y>
+      <width>181</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>removeDeviceFromTalkback</string>
+    </property>
+   </widget>
+   <widget class="QTextEdit" name="textEdit">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>250</y>
+      <width>261</width>
+      <height>151</height>
+     </rect>
     </property>
    </widget>
   </widget>
@@ -72,7 +147,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>400</width>
+     <width>606</width>
      <height>23</height>
     </rect>
    </property>

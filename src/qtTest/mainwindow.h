@@ -24,6 +24,16 @@ private slots:
 
     void on_pushButton_4_clicked();
     void on_get_buff();
+    void on_startTalkback_clicked();
+
+    void on_checkClientIsSupportTalkback_clicked();
+
+    void on_pauseTalkback_clicked();
+
+    void on_addDeviceToTalkback_clicked();
+
+    void on_removeDeviceFromTalkback_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTimer m_tTime;

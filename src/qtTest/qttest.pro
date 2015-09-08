@@ -35,4 +35,5 @@ unix{
 
 }else{
 LIBS += -L$$PWD/../../bin/$${RELDIR} -lofferAudioDataCInterface
+LIBS += -L$$PWD/../../bin/$${RELDIR} -lTalkbackCInterface
 }

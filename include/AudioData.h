@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-TalkbackInterface_API  bool TALKBACKCALL checkClientIsSupportTalkback();
+TalkbackInterface_API  bool TALKBACKCALL checkClientIsSupportMicrophone();
 TalkbackInterface_API bool TALKBACKCALL checkIsSupportSpecAudioCode(tagAudioCodeMode tCodeMode);
 TalkbackInterface_API int  TALKBACKCALL getSpecAudioCodeModeFrameBuffSize(tagAudioCodeMode tCodeMode);
 TalkbackInterface_API bool TALKBACKCALL applyAudio(tagAudioContext *pContext,tagAudioCodeMode tCodeMode,AudioErrorCallback pErrorCallback);

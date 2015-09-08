@@ -19,7 +19,11 @@ SOURCES += talkback.cpp \
     talkbackrtsp.cpp \
     talkbackrtp.cpp \
     ../common/sock.c \
-    ../common/vlog.c
+    ../common/vlog.c \
+    ../common/sdplib.c \
+    ../common/_base64.c \
+    ../common/authentication.c \
+    ../common/_md5.c
 
 HEADERS += talkback.h\
         talkback_global.h \
@@ -32,7 +36,13 @@ HEADERS += talkback.h\
     ../common/sock.h \
     ../common/gnu_win.h \
     talkbackrtspdef.h \
-    ../common/vlog.h
+    ../common/vlog.h \
+    ../common/sdplib.h \
+    ../common/_base64.h \
+    ../common/authentication.h \
+    ../common/_md5.h \
+    talkbackRtpDef.h \
+    talkbackRtcpDef.h
 
 unix {
     target.path = /usr/lib
