@@ -30,7 +30,7 @@ bool addDeviceToTalkback(lpTalkbackContext parm,tagTalkBackMode tMode){
         parm->pTalkbackContext=pTalkback;
         return true;
     }else{
-        INFO_PRINT("addDeviceToTalkback fail");
+        INFO_PRINT("addDeviceToTalkback fail as pTalkback->addDeviceToTalkback fail");
         pTalkback->removeDeviceFromTalkback(parm);
         delete pTalkback;
         return false;

@@ -339,12 +339,12 @@ bool TalkbackRtsp::talkbackRtspSetup_setup()
                         }
                         if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[i].media_n.type,
                                               SDP_ATTR_CONTROL,(void *)&attr)==RTSP_RET_FAIL){
-                            VLOG(VLOG_DEBUG,"get media SDP_ATTR_CONTROL attr fail");
+                            INFO_PRINT("get media SDP_ATTR_CONTROL attr fail ,continue ,find next media");
                             continue;
                         }
                         if(requestSeup(attr.value,m_pRtspInfo->sdp->media[i].media_n.type,
                                        m_pRtspInfo->sdp->media[i].media_n.format,real_type)==RTSP_RET_FAIL){
-                            VLOG(VLOG_ERROR,"setup audio fail");
+                            INFO_PRINT("talkbackRtspSetup_setup fail as setup audio fail ");
                             goto CONNECT_ERR_EXIT;
                         }
                         iSetupMedia++;
@@ -443,7 +443,7 @@ TRY_INTERLEAVED_MODE:
                 RTSP_USER_AGENT,
                 temp2);
     }else{
-        sprintf(m_pRtspInfo->passWord,format2,temp,RTSP_VERSION,
+        sprintf(m_pRtspInfo->payload,format2,temp,RTSP_VERSION,
                 ++m_pRtspInfo->cseq,
                 RTSP_USER_AGENT,
                 temp2,
@@ -835,7 +835,7 @@ bool TalkbackRtsp::parseRtspTransport(char *buf)
         }
         if((pTemp=strstr(pTransport,"server_port"))!=NULL){
             pTemp+=strlen("server_port=");
-            sscanf(pTemp,"%d%*s",m_pRtspInfo->server_port);
+            sscanf(pTemp,"%d%*s",&m_pRtspInfo->server_port);
         }
         pTemp=buf+strlen(buf);
         sprintf(pTemp,";client_port=%d-%d;server_port=%d-%d",

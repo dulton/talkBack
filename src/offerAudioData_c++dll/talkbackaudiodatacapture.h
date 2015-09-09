@@ -49,7 +49,7 @@ private:
 
     void errorCallBack(tagAudioDataCaptureError tError,char *ErrorInfo);
     void audioDataCaptureStep_dispatachData(char *pBuff);
-    void copyBuffToContexList(int n,int nMax,char *pBuff);
+    void copyBuffToContexList(int n,talkback_int64 nMax,char *pBuff);
 private:
     tagCapureContexInfo *m_pContexList[AUDIO_CODE_MODE_SIZE];
     TalkbackLock m_tContextListLock;

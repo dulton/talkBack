@@ -33,7 +33,7 @@
 
         fprintf(stderr, "\033[0m"); \
 
-    } while (0)
+    } while (0);
 
 #define INFO_PRINT(str) \
 
@@ -41,19 +41,19 @@
 
     { \
 
-        printf("\033[31m"); \
+        fprintf(stdout,"\033[31m"); \
 
-        printf("[file: %s line: %d] %s\n", __FILE__, __LINE__, str); \
+        fprintf(stdout,"[file: %s line: %d] %s\n", __FILE__, __LINE__, str); \
 
-        printf("\033[0m"); \
+        fprintf(stdout,"\033[0m"); \
 
-    } while(0)
+    } while(0);
 
 #else
 
 #define ERR_PRINT(str)
 
-#define INFO_PRINT(str)
+#define INFO_PRINT(str) fprintf(stdout,"[file: %s line: %d] %s\n", __FILE__, __LINE__, str);
 
 #endif
 

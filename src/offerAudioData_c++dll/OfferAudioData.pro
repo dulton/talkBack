@@ -8,7 +8,7 @@ QT       -= core gui
 
 TARGET = OfferAudioData
 TEMPLATE = lib
-
+CONFIG +=console
 DEFINES += OFFERAUDIODATA_LIBRARY
 
 SOURCES += offeraudiodata.cpp \
@@ -41,7 +41,7 @@ INCLUDEPATH += $$PWD/../openal/include
 unix{
 
 }else{
-LIBS += -L$$PWD/../openal-build -lOpenAL32
+LIBS += -L$$PWD/../openal-qt -lOpenAL32
 }
 
 CONFIG(release, debug|release){

@@ -1,14 +1,16 @@
 #include "talkbackcore.h"
 #include "TalkBackCommonTool.h"
 #include "AudioData.h"
-TalkbackCore::TalkbackCore()
+TalkbackCore::TalkbackCore():m_pRtp(NULL),
+    m_pRtpInfo(NULL),
+    m_pRtsp(NULL),
+    m_pRtspInfo(NULL),
+    m_pTalkbackContext(NULL),
+    m_tThreadId(0),
+    m_bThreadStop(true),
+    m_bStartTalkback(false)
 {
-    m_tThreadId=0;
-    m_bThreadStop=true;
-    m_bStartTalkback=false;
-    m_pTalkbackContext=NULL;
-    m_pRtp=NULL;
-    m_pRtsp=NULL;
+
 }
 
 bool TalkbackCore::checkClientIsSupportTalkback()
@@ -172,11 +174,12 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
             }
             break;
         case TalkbackCoreThreadStep_deinit:{
-
+                bStop=true;
             }
             break;
         }
     }
+    INFO_PRINT("TalkbackCore thread end");
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_init()
@@ -191,9 +194,20 @@ bool TalkbackCore::talkbackCoreThreadStep_init()
         delete m_pRtp;
         m_pRtp=NULL;
     }
+
     m_pRtp=new TalkbackRtp;
     m_pRtsp=new TalkbackRtsp;
-
+    if(NULL!=m_pRtspInfo){
+        deinitRtspInfo();
+    }
+    if(NULL!=m_pRtpInfo){
+        deinitRtpInfo();
+    }
+    initRtpInfo();
+    initRtspInfo();
+    m_pRtsp->init(m_pRtspInfo);
+    m_pRtp->init(m_pRtpInfo);
+    return true;
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_setup_rtsp()
@@ -243,17 +257,55 @@ bool TalkbackCore::isTimeToSendAudioBuffer()
 
 void TalkbackCore::initRtspInfo()
 {
-
+    m_pRtspInfo=new tagTalkbackRtspInfo;
+    m_pRtspInfo->role=RTSP_CLIENT;
+    memset(m_pRtspInfo->userName,0,sizeof(m_pRtspInfo->userName));
+    memcpy(m_pRtspInfo->userName,m_pTalkbackContext->userName,strlen(m_pTalkbackContext->userName));
+    memset(m_pRtspInfo->passWord,0,sizeof(m_pRtspInfo->passWord));
+    memcpy(m_pRtspInfo->passWord,m_pTalkbackContext->passWord,strlen(m_pTalkbackContext->passWord));
+    m_pRtspInfo->nPort=m_pTalkbackContext->nPort;
+    memset(m_pRtspInfo->url,0,sizeof(m_pRtspInfo->url));
+    memcpy(m_pRtspInfo->url,m_pTalkbackContext->url,strlen(m_pTalkbackContext->url));
+    memset(m_pRtspInfo->ip,0,sizeof(m_pRtspInfo->ip));
+    memcpy(m_pRtspInfo->ip,m_pTalkbackContext->ip,strlen(m_pTalkbackContext->ip));
+    memset(m_pRtspInfo->streamName,0,sizeof(m_pRtspInfo->streamName));
+    sscanf(m_pRtspInfo->url,"rtsp://%*[^/]/%s",m_pRtspInfo->streamName);
+    memset(m_pRtspInfo->session_id,0,sizeof(m_pRtspInfo->session_id));
+    m_pRtspInfo->rtspSocket=-1;
+    m_pRtspInfo->payloadSize=0;
+    m_pRtspInfo->cseq=0;
+    m_pRtspInfo->bLogin=true;
+    m_pRtspInfo->sdp=NULL;
+    m_pRtspInfo->session_timeout=60;
+    m_pRtspInfo->auth=NULL;
+    m_pRtspInfo->rtpseq=0;
+    m_pRtspInfo->rtptime=0;
+    m_pRtspInfo->stream_type = RTSP_STREAM_VIDEO | RTSP_STREAM_AUDIO;
+    m_pRtspInfo->buffer_time=0;
+    m_pRtspInfo->low_transport=RTP_TRANSPORT_UDP;
+    m_pRtspInfo->cast_type=RTP_UNICAST;
+    m_pRtspInfo->client_port=0;
+    m_pRtspInfo->server_port=0;
+    m_pRtspInfo->channel=0;
+    m_pRtspInfo->ssrc=0;
+    m_pRtspInfo->work_mode=RTSP_MODE_PLAY;
+    m_pRtspInfo->transport=RTP_AUTO;
+    m_pRtspInfo->rtp_audio=NULL;
+    m_pRtspInfo->rtp_video=NULL;
+    m_pRtspInfo->rtcp_audio=NULL;
+    m_pRtspInfo->rtcp_video=NULL;
 }
 
 void TalkbackCore::deinitRtspInfo()
 {
-
+    //fix me
+    delete m_pRtspInfo;
+    m_pRtspInfo=NULL;
 }
 
 void TalkbackCore::initRtpInfo()
 {
-
+    //fix me
 }
 
 void TalkbackCore::deinitRtpInfo()

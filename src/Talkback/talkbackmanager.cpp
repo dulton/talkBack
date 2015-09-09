@@ -1,5 +1,6 @@
 #include "talkbackmanager.h"
 #include "talkbackcore.h"
+#include "TalkBackCommonTool.h"
 typedef struct TalkbackNode{
     lpTalkbackContext pTalkbackContext;
     TalkbackCore *pTalkbackCore;
@@ -65,11 +66,13 @@ bool TalkbackManager::addDeviceToTalkback(lpTalkbackContext parm, tagTalkBackMod
 {
     m_tTalkbackNodeListLock.lock();
     if(NULL==parm){
+        INFO_PRINT("addDeviceToTalkback fail as parm is null");
         m_tTalkbackNodeListLock.unlock();
         return false;
     }
     if(TalkbackCore::checkClientIsSupportTalkback()==false){
         m_tTalkbackNodeListLock.unlock();
+        INFO_PRINT("addDeviceToTalkback fail as client do not supporttalkback");
         return false;
     }
     tagTalkbackNode *pTalkbackNodeNext=new tagTalkbackNode;
@@ -82,6 +85,7 @@ bool TalkbackManager::addDeviceToTalkback(lpTalkbackContext parm, tagTalkBackMod
         delete pTalkbackCore;
         delete pTalkbackNodeNext;
         m_tTalkbackNodeListLock.unlock();
+        INFO_PRINT("addDeviceToTalkback fail as pTalkbackCore->initTalkback(parm) fail");
         return false;
     }
     if(tMode==TALKBACK_EXCLUSIVE){
@@ -114,6 +118,7 @@ bool TalkbackManager::addDeviceToTalkback(lpTalkbackContext parm, tagTalkBackMod
         m_pTalkbackNodeList=pTemp;
     }
     m_tTalkbackNodeListLock.unlock();
+    return true;
 }
 
 bool TalkbackManager::removeDeviceFromTalkback(lpTalkbackContext parm)

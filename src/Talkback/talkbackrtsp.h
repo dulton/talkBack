@@ -9,8 +9,8 @@
 
 typedef struct __tagTalkbackRtspInfo{
     int     role;//client ,server
-    char    userName[256];
-    char    passWord[256];
+    char    userName[20];
+    char    passWord[20];
     int     nPort;//目标端口
     char    url[256];
     char    ip[20];

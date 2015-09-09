@@ -18,11 +18,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&m_tTime,SIGNAL(timeout()),this,SLOT(on_get_buff()));
     m_pTalkbackContext=new tagTalkbackContext;
     m_pTalkbackContext->pUserContext=this;
-    sprintf(m_pTalkbackContext->ip,"192.168.1.106");
-    sprintf(m_pTalkbackContext->passWord,"admin");
+    m_pTalkbackContext->pTalkbackContext=NULL;
+    sprintf(m_pTalkbackContext->ip,"192.168.100.75");
+    sprintf(m_pTalkbackContext->passWord,"12345");
     sprintf(m_pTalkbackContext->userName,"admin");
-    sprintf(m_pTalkbackContext->url,"rtsp://192.168.1.106:8554/test264");
-    m_pTalkbackContext->nPort=8554;
+    sprintf(m_pTalkbackContext->url,"rtsp://192.168.100.75:554/Streaming/Channels/1?transportmode=unicast&profile=Profile_1");
+    m_pTalkbackContext->nPort=554;
+    m_pTalkbackContext->errorEventHook=NULL;
 
 }
 
@@ -57,6 +59,7 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::on_pushButton_4_clicked()
 {
     //audioDevice
+    qDebug()<<__func__<<__LINE__<<"start checkClientIsSupportMicrophone";
     bool bRet=checkClientIsSupportMicrophone();
     qDebug()<<__func__<<__LINE__<<"checkClientIsSupportMicrophone:"<<bRet;
     return;
@@ -100,15 +103,33 @@ void MainWindow::on_checkClientIsSupportTalkback_clicked()
 
 void MainWindow::on_pauseTalkback_clicked()
 {
-
+    char stream[]="rtsp://192.168.100.75:554/Streaming/Channels/1?transportmode=unicast&profile=Profile_1";
+    char sGetStream[128];
+    sscanf(stream,"rtsp://%*[^/]/%s",sGetStream);
+    return;
 }
 
 void MainWindow::on_addDeviceToTalkback_clicked()
 {
-
+    bool bRet=addDeviceToTalkback(m_pTalkbackContext,TALKBACK_EXCLUSIVE);
+    qDebug()<<__func__<<__LINE__<<"on_addDeviceToTalkback_clicked:"<<bRet;
 }
 
 void MainWindow::on_removeDeviceFromTalkback_clicked()
 {
 
+}
+
+void MainWindow::on_updateCode_clicked()
+{
+    char pcode[]=
+            "<info>\n"\
+            "<ip></ip>\n"\
+            "<password></password>\n"\
+            "<username></username>\n"\
+            "<url></url>\n"\
+            "<port></port>\n"\
+            "</info>";
+    QString sText=QString(pcode);
+    ui->textEdit->setText(sText);
 }

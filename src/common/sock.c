@@ -258,7 +258,7 @@ SOCK_t SOCK_tcp_connect(char *ip,int port,int rwtimeout)
 	memset(&addr, 0, sizeof(SOCKADDR_IN_t));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons((unsigned short)port);
-	addr.sin_addr.s_addr = inet_addr(ip);
+    addr.sin_addr.s_addr = inet_addr(ip);
 	ret = connect(sock,(SOCKADDR_t *)&addr,sizeof(SOCKADDR_IN_t));
 	if(ret < 0){
 		tm.tv_sec=5;
