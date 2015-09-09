@@ -38,7 +38,7 @@ long long TalkbackThread::currentTime()
 #ifdef WIN32
     struct timeb tp;
     ftime(&tp);
-    tCurrentTime=tp.millitm+tp.time*1000;
+    tCurrentTime=tp.millitm+(tp.time)*1000.0;
 #else
     struct timeval tmv;
     gettimeofday(&tmv,NULL);

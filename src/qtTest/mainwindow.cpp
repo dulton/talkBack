@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "AudioData.h"
-#include "TalkbackCInterface.h"
+
 #include<QDebug>
 #include <QTime>
 #include <QDateTime>
@@ -16,6 +16,13 @@ MainWindow::MainWindow(QWidget *parent) :
     g_pContext->pUserContext=this;
     g_pContext->pAudioDataContext=NULL;
     connect(&m_tTime,SIGNAL(timeout()),this,SLOT(on_get_buff()));
+    m_pTalkbackContext=new tagTalkbackContext;
+    m_pTalkbackContext->pUserContext=this;
+    sprintf(m_pTalkbackContext->ip,"192.168.1.106");
+    sprintf(m_pTalkbackContext->passWord,"admin");
+    sprintf(m_pTalkbackContext->userName,"admin");
+    sprintf(m_pTalkbackContext->url,"rtsp://192.168.1.106:8554/test264");
+    m_pTalkbackContext->nPort=8554;
 
 }
 
@@ -80,12 +87,15 @@ void MainWindow::on_get_buff()
 
 void MainWindow::on_startTalkback_clicked()
 {
-
+    bool bRet=startTalkback(m_pTalkbackContext);
+    qDebug()<<__func__<<__LINE__<<"startTalkback:"<<bRet;
 }
 
 void MainWindow::on_checkClientIsSupportTalkback_clicked()
 {
-
+    bool bRet=checkClientIsSupportTalkback();
+    qDebug()<<__func__<<__LINE__<<"checkClientIsSupportMicrophone:"<<bRet;
+    return;
 }
 
 void MainWindow::on_pauseTalkback_clicked()

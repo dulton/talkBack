@@ -153,8 +153,8 @@ alsoft-config.exe: utils/alsoft-config/CMakeFiles/alsoft-config.dir/main.cpp.obj
 alsoft-config.exe: utils/alsoft-config/CMakeFiles/alsoft-config.dir/mainwindow.cpp.obj
 alsoft-config.exe: utils/alsoft-config/CMakeFiles/alsoft-config.dir/moc_mainwindow.cxx.obj
 alsoft-config.exe: utils/alsoft-config/CMakeFiles/alsoft-config.dir/build.make
-alsoft-config.exe: C:/Qt/4.8.6/lib/libQtGui4.a
-alsoft-config.exe: C:/Qt/4.8.6/lib/libQtCore4.a
+alsoft-config.exe: C:/Qt/4.8.6/lib/libQtGuid4.a
+alsoft-config.exe: C:/Qt/4.8.6/lib/libQtCored4.a
 alsoft-config.exe: utils/alsoft-config/CMakeFiles/alsoft-config.dir/linklibs.rsp
 alsoft-config.exe: utils/alsoft-config/CMakeFiles/alsoft-config.dir/objects1.rsp
 alsoft-config.exe: utils/alsoft-config/CMakeFiles/alsoft-config.dir/link.txt

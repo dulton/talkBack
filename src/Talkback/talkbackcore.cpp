@@ -1,5 +1,6 @@
 #include "talkbackcore.h"
 #include "TalkBackCommonTool.h"
+#include "AudioData.h"
 TalkbackCore::TalkbackCore()
 {
     m_tThreadId=0;
@@ -12,7 +13,7 @@ TalkbackCore::TalkbackCore()
 
 bool TalkbackCore::checkClientIsSupportTalkback()
 {
-
+    return checkClientIsSupportMicrophone();
 }
 static TALKBACK_THREAD_RET_TYPE startCaptureThreadEx(void *arg){
     TalkbackCore* pContext=(TalkbackCore*)arg;

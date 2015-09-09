@@ -68,3 +68,8 @@ unix{
 LIBS += -lws2_32
 
 }
+unix{
+
+}else{
+LIBS += -L$$PWD/../../bin/$${RELDIR} -lofferAudioDataCInterface
+}

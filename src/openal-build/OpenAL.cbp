@@ -304,7 +304,6 @@
             <Add option="-D_LARGEFILE_SOURCE" />
             <Add option="-D_LARGE_FILES" />
             <Add option="-DQT_DLL" />
-            <Add option="-DQT_NO_DEBUG" />
             <Add option="-DQT_GUI_LIB" />
             <Add option="-DQT_CORE_LIB" />
             <Add directory="C:/Qt/4.8.6/include" />
@@ -338,7 +337,6 @@
             <Add option="-D_LARGEFILE_SOURCE" />
             <Add option="-D_LARGE_FILES" />
             <Add option="-DQT_DLL" />
-            <Add option="-DQT_NO_DEBUG" />
             <Add option="-DQT_GUI_LIB" />
             <Add option="-DQT_CORE_LIB" />
             <Add directory="C:/Qt/4.8.6/include" />
@@ -564,12 +562,6 @@
           <Option virtualFolder="CMake Files\cmake\" />
       </Unit>
       <Unit filename="E:/simon/code/gitCode/talkback/src/openal/cmake/CheckFileOffsetBits.cmake">
-          <Option virtualFolder="CMake Files\cmake\" />
-      </Unit>
-      <Unit filename="E:/simon/code/gitCode/talkback/src/openal/cmake/CheckFileOffsetBits.c">
-          <Option virtualFolder="CMake Files\cmake\" />
-      </Unit>
-      <Unit filename="E:/simon/code/gitCode/talkback/src/openal/cmake/CheckFileOffsetBits.c">
           <Option virtualFolder="CMake Files\cmake\" />
       </Unit>
       <Unit filename="E:/simon/code/gitCode/talkback/src/openal/cmake/FindFluidSynth.cmake">
