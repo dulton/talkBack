@@ -1061,7 +1061,48 @@ int TalkbackRtsp::portManage_apply1_port3(unsigned int * const port)
 
 bool TalkbackRtsp::getSocketGroup(RTSP_SOCKET_GROUP *rsg)
 {
+    if(NULL==rsg){
+        return false;
+    }
+    int rtpSocket=-1;
+    unsigned short rtpPort=0;
+    int rtcpSocket=-1;
+    bool ret=false;
+    while(1){
+        rtpSocket=getAvailablePort(rtpPort);
+        if(rtpSocket==-1){
+            continue;
+        }
+        if((rtpPort&1)){
+            SOCK_close(rtpSocket);
+            continue;
+        }
+        rtcpSocket=createSocket(rtpPort+1);
+        if(rtcpSocket==-1){
+            SOCK_close(rtpSocket);
+            continue;
+        }
+        ret =true;
+        break;
+    }
+    if(ret==true){
+        rsg->rtcp_port=rtpPort+1;
+        rsg->rtcp_socket=rtcpSocket;
+        rsg->rtp_port=rtpPort;
+        rsg->rtp_socket=rtpSocket;
+    }
+    return ret;
+}
 
+int TalkbackRtsp::getAvailablePort(unsigned short &port)
+{
+//lock;
+    return SOCK_udp_init_2(NULL,port,RTSP_SOCK_TIMEOUT);
+}
+
+int TalkbackRtsp::createSocket(int port)
+{
+    return SOCK_udp_init(NULL,port,RTSP_SOCK_TIMEOUT);
 }
 
 

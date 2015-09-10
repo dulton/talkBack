@@ -96,6 +96,8 @@ private:
     int portManage_apply1_port3(unsigned int * const port);
 
     bool getSocketGroup(RTSP_SOCKET_GROUP *rsg);
+    int getAvailablePort(unsigned short &port);
+    int createSocket(int port);
 private:
     tagTalkbackRtspInfo *m_pRtspInfo;
 };

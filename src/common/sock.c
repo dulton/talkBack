@@ -394,7 +394,79 @@ int SOCK_tcp_connect2(char *target_ip, int target_port, int connect_timeout, int
 #endif
 }
 
+SOCK_t SOCK_udp_init_2(char *bindip,int &bind_port,int rwtimeout){
+    int ret;
+    int on=1;
+    int buf_size;
+    SOCKLEN_t optlen;
+    SOCK_t sock=SOCK_new(AF_INET,SOCK_DGRAM,0);
+    SOCKADDR_IN_t my_addr;
+#if defined(_WIN32)||defined(_WIN64)
+    int timeo=rwtimeout;
+#else
+    struct timeval timeo={rwtimeout/1000,(rwtimeout%1000)*1000};
+#endif
+    if(sock<0){
+        return -1;
+    }
+//set addr reuse
+    ret=setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char *)&on,sizeof(on));
+    if(ret<0){
+        SOCK_close(sock);
+        return -1;
+    }
+//set receive timeout
+    ret=setsockopt(sock,SOL_SOCKET,SO_RCVTIMEO,(SOCKOPTARG_t*)&timeo,sizeof(timeo));
+    if(ret<0){
+        SOCK_close(sock);
+        return -1;
+    }
+    //set buffer size
+    //get buffer size
+    optlen =sizeof(buf_size);
+    ret=getsockopt(sock,SOL_SOCKET,SO_SNDBUF,(char *)&buf_size,&optlen);
+    if(ret<0){
+        SOCK_close(sock);
+        return -1;
+    }
+    buf_size=16*1024;
+    ret=setsockopt(sock,SOL_SOCKET,SO_SNDBUF,(char *)&buf_size,sizeof(buf_size));
+    if(ret<0){
+        SOCK_close(sock);
+        return -1;
+    }
+    optlen=sizeof(buf_size);
+    ret=getsockopt(sock,SOL_SOCKET,SO_RCVBUF,(char *)&buf_size,&optlen);
+    if(ret<0){
+        SOCK_close(sock);
+        return -1;
+    }
+    buf_size=UDP_SOCK_BUF_SIZE/2;
+    ret=setsockopt(sock,SOL_SOCKET,SO_RCVBUF,(char *)&buf_size,sizeof(buf_size));
+    if(ret<0){
+        SOCK_close(sock);
+        return -1;
+    }
+    memset(&my_addr,0,sizeof(my_addr));
+    my_addr.sin_family=AF_INET;
+    my_addr.sin_addr.s_addr=bindip?inet_addr(bindip):INADDR_ANY;
+    my_addr.sin_port=0;
+    if(ret<0){
+        SOCK_close(sock);
+        return -1;
+    }
+    SOCKADDR_t addr;
+    SOCKADDR_IN_t *addr_in=(SOCKADDR_IN_t)&addr;
+    SOCKLEN_t sock_len=sizeof(SOCKADDR_t);
+    ret =getsockname(sock,&addr,&sock_len);
+    if(ret!=0){
+        SOCK_close(sock);
+        return -1;
+    }
 
+    bind_port=ntohs(addr_in->sin_port);
+    return sock;
+}
 SOCK_t SOCK_udp_init(char *bindip, int port,int rwtimeout/* unit: millisecond */)
 {
 	int ret;
