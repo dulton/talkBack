@@ -60,6 +60,7 @@ AudioCode::~AudioCode()
 
 bool AudioCode::checkClientIsSupportTalkback()
 {
+    //return TalkbackAudioDataCapture::checkClientIsSupportTalkbackEx();
     applyCapture();
     int nRet=g_pCapture->checkClientIsSupportTalkback();
     releaseCapture();

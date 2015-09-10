@@ -626,6 +626,7 @@ SessionDesc_t* SDP_decode(char *src)
 			case SDP_SPEC_MEDIA_DESC:
 				if (sdp->media_num < SDP_MAX_MEDIA_LEVEL) {
 					media = (MediaDesc_t *)(&sdp->media[sdp->media_num]);
+                    media->bRtspSetUp=0;
 					sscanf(tmp,"%s %d %s %d",media->media_n.type,&media->media_n.port,
 						media->media_n.protocal,&media->media_n.format);
 					media_flag=TRUE;
@@ -643,17 +644,23 @@ SessionDesc_t* SDP_decode(char *src)
 	return sdp;
 }
 
-int SDP_get_media_attr(SessionDesc_t *sdp,char *media_type,int attr,void *out)
+int SDP_get_media_attr(SessionDesc_t *sdp,char *media_type,int attr,void *out,int ndefalut)
 {
 	int i;
 	int focus=FALSE;
 	MediaDesc_t *media=NULL;
-	for(i=0;i<sdp->media_num;i++){
-		if(strcmp(sdp->media[i].media_n.type,media_type)==0){
-			focus = TRUE;
-			break;
-		}
-	}
+    if(ndefalut==-1){
+        for(i=0;i<sdp->media_num;i++){
+            if(strcmp(sdp->media[i].media_n.type,media_type)==0){
+                focus = TRUE;
+                break;
+            }
+        }
+    }else{
+        i=ndefalut;
+        focus=TRUE;
+    }
+
 	if(focus){
 		focus = FALSE;
 		media = (MediaDesc_t *)&sdp->media[i];

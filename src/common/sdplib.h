@@ -169,6 +169,7 @@ typedef struct _media_desc
 	unsigned int ssrc;
 	// a=*
 	int attr_num;
+    int bRtspSetUp;
 	Attribute_t attri[SDP_MAX_ATTR_NUM];
 }MediaDesc_t;
 
@@ -223,6 +224,7 @@ typedef struct _session_desc
 	char repeat_time[64];
 	// m=*
 	int media_num;
+
 	MediaDesc_t media[SDP_MAX_MEDIA_LEVEL];
 }SessionDesc_t;
 
@@ -234,7 +236,7 @@ extern int SDP_add_sps_pps(SessionDesc_t *sdp, unsigned char *sps, int sps_size,
 extern int SDP_encode(SessionDesc_t *sdp);  // genrate the session description string from a sdp
 extern SessionDesc_t* SDP_decode(char *src);// generate a instance of sdp from sdp session description string
 extern int SDP_get_attr(SessionDesc_t *sdp,int attr,void *out);// out must type of Attrubute_t
-extern int SDP_get_media_attr(SessionDesc_t *sdp,char *media_type,int attr,void *out);// out must type of Attrubute_t
+extern int SDP_get_media_attr(SessionDesc_t *sdp,char *media_type,int attr,void *out,int ndefalut);// out must type of Attrubute_t
 extern int SDP_cleanup(SessionDesc_t *sdp); // destroy an existing sdp
 //
 extern unsigned int SDP_get_ssrc(SessionDesc_t *sdp);

@@ -6,6 +6,16 @@
 #include "authentication.h"
 #include "talkbackRtcpDef.h"
 #include "talkbackRtpDef.h"
+#include "talkbackrtp.h"
+#include "talkbackrtcp.h"
+
+typedef struct rtsp_socket_group
+{
+    int rtp_socket;             //rtp
+    unsigned short rtp_port;    //rtp
+    int rtcp_socket;            //rtcp
+    unsigned short rtcp_port;   //rtcp
+} RTSP_SOCKET_GROUP;
 
 typedef struct __tagTalkbackRtspInfo{
     int     role;//client ,server
@@ -45,11 +55,12 @@ typedef struct __tagTalkbackRtspInfo{
 
     enRTP_TRANSPORT transport;
 
-    Rtp_t *rtp_video;
-    Rtp_t *rtp_audio;
-    Rtcp_t *rtcp_audio;
-    Rtcp_t *rtcp_video;
 
+
+    TalkbackRtcp *pRtcp_video;
+    TalkbackRtcp *pRtcp_audio;
+    TalkbackRtp *pRtp_video;
+    TalkbackRtp *pRtp_audio;
 }tagTalkbackRtspInfo;
 class TalkbackRtsp
 {
@@ -67,7 +78,8 @@ private:
     bool talkbackRtspSetup_option();
     bool talkbackRtspSetup_describe();
     bool talkbackRtspSetup_setup();
-
+    bool talkbackRtspPlay(char *control,int n);
+    void talkbackRtspTeardown(char *control,int n);
     bool requestSeup(char *control,char *media_type,int type,int real_type);//发送 setup 请求
 
     bool sendRtspPacket();//发送 rtsp 包
@@ -82,23 +94,8 @@ private:
     //申请可用端口
     int portManage_apply2_port3(unsigned int * const port);
     int portManage_apply1_port3(unsigned int * const port);
-    // rtp
-    Rtp_t *rtp_client_new(int interleaved,int sock,int payloadType,int mediaType,char *dstip,int dstport,int buffer_time);
-    Rtp_t *rtp_server_new(unsigned int ssrc,int payloadType,int protocal,int interleaved,int sock,char *dstip,int dstport);
-    int rtp_destroy(Rtp_t *rtp);
-    //rtcp
-    int rtcp_init(Rtcp_t**r,
-                  int role,//act as client or server
-                  uint32_t src_id,//src id
-                  int protocal,//udp or tcp
-                  int cast_type,//unicast or multicast
-                  int interleaved,//true ro false
-                  int rtsp_sock,// if interleaved, rtp sock user this
-                  int chn_port_s,//rtp port or channel if in in interleaved mode
-                  int chn_port_c,
-                  Rtp_t *rtp
-                  );
-    int rtcp_destroy(Rtcp_t *rtcp);
+
+    bool getSocketGroup(RTSP_SOCKET_GROUP *rsg);
 private:
     tagTalkbackRtspInfo *m_pRtspInfo;
 };

@@ -20,25 +20,24 @@ private:
     bool talkbackCoreThreadStep_play_rtsp();
     bool talkbackCoreThreadStep_init_rtp();
     bool talkbackCoreThreadStep_sendbuf_rtp();
+    bool talkbackCoreThreadStep_read_data();
     void talkbackCoreThreadStep_teardown_rtsp();
     bool talkbackCoreThreadStep_keepalive_rtsp();
 
     bool isTimeToSendRtspKeepAlive();
     bool isTimeToSendAudioBuffer();
+    bool isTimeToReadSocketData();
 
     void initRtspInfo();
     void deinitRtspInfo();
-    void initRtpInfo();
-    void deinitRtpInfo();
 private:
     volatile bool m_bThreadStop;
     TALKBACK_THREAD_HANDLE m_tThreadId;
     volatile bool m_bStartTalkback;
     lpTalkbackContext m_pTalkbackContext;
-    TalkbackRtp *m_pRtp;
     TalkbackRtsp *m_pRtsp;
     tagTalkbackRtspInfo *m_pRtspInfo;
-    tagTalkbackRtpInfo *m_pRtpInfo;
+
 };
 
 #endif // TALKBACKCORE_H

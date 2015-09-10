@@ -26,6 +26,19 @@ TalkbackAudioDataCapture::~TalkbackAudioDataCapture()
 
 }
 
+bool TalkbackAudioDataCapture::checkClientIsSupportTalkbackEx()
+{
+    //阻塞很久
+    ALCdevice *device=NULL;
+    device= alcCaptureOpenDevice(NULL, SAMPLING_RATE,AL_FORMAT_MONO16, CAPTURE_BUFFER_LENGTH_MIN);
+    if(device!=NULL){
+        alcCaptureCloseDevice(device);
+        return true;
+    }else{
+        return false;
+    }
+}
+
 bool TalkbackAudioDataCapture::checkClientIsSupportTalkback()
 {
     if(m_bClientIsSupportTalkback){
@@ -360,14 +373,6 @@ bool TalkbackAudioDataCapture::reCheckClientIsSupportTalkback()
     }else{
         //check
         return false;
-        ALCdevice *device = alcCaptureOpenDevice(NULL, SAMPLING_RATE,AL_FORMAT_MONO16, CAPTURE_BUFFER_LENGTH_MIN);
-        if(device){
-            alcCaptureCloseDevice(device);
-            return true;
-        }else{
-            alcCaptureCloseDevice(device);
-            return false;
-        }
     }
 
 }

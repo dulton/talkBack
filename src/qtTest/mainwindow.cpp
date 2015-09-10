@@ -117,7 +117,7 @@ void MainWindow::on_addDeviceToTalkback_clicked()
 
 void MainWindow::on_removeDeviceFromTalkback_clicked()
 {
-
+    removeDeviceFromTalkback(m_pTalkbackContext);
 }
 
 void MainWindow::on_updateCode_clicked()

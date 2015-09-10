@@ -129,6 +129,7 @@ bool TalkbackRtsp::setup()
                     tStep=tagTalkbackRtspSetup_option;
                 }else{
                     tStep=tagTalkbackRtspSetup_fail;
+                    INFO_PRINT("setup fail as talkbackRtspSetup_connect fail");
                 }
             }
             break;
@@ -137,6 +138,7 @@ bool TalkbackRtsp::setup()
                     tStep=tagTalkbackRtspSetup_describe;
                 }else{
                     tStep=tagTalkbackRtspSetup_fail;
+                    INFO_PRINT("setup fail as talkbackRtspSetup_option fail");
                 }
             }
             break;
@@ -145,6 +147,7 @@ bool TalkbackRtsp::setup()
                     tStep=tagTalkbackRtspSetup_setup;
                 }else{
                     tStep=tagTalkbackRtspSetup_fail;
+                    INFO_PRINT("setup fail as talkbackRtspSetup_describe fail");
                 }
             }
             break;
@@ -153,6 +156,7 @@ bool TalkbackRtsp::setup()
                     tStep=tagTalkbackRtspSetup_success;
                 }else{
                     tStep=tagTalkbackRtspSetup_fail;
+                    INFO_PRINT("setup fail as talkbackRtspSetup_setup fail");
                 }
             }
             break;
@@ -177,7 +181,36 @@ bool TalkbackRtsp::setup()
 
 bool TalkbackRtsp::play()
 {
-
+    //
+    if(NULL==m_pRtspInfo){
+        INFO_PRINT("play fail as m_pRtspInfo is null");
+        return false;
+    }
+    int nPlayNum=0;
+    for(int n=0;n<m_pRtspInfo->sdp->media_num;n++){
+        if(m_pRtspInfo->sdp->media[n].bRtspSetUp!=1){
+            continue;
+        }else{
+            //go to play
+            Attribute_t attr;
+            if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[n].media_n.type,
+                                  SDP_ATTR_CONTROL,(void*)&attr,n)==RTSP_RET_FAIL){
+                VLOG(VLOG_ERROR,"get media audio attr fail");
+                continue;
+            }
+            if(talkbackRtspPlay(attr.value,n)==true){
+                nPlayNum++;
+            }else{
+                INFO_PRINT("play fail as talkbackRtspPlay fail");
+                return false;
+            }
+        }
+    }
+    if(nPlayNum==0){
+        return false;
+    }else{
+        return true;
+    }
 }
 
 bool TalkbackRtsp::keepalive()
@@ -187,6 +220,22 @@ bool TalkbackRtsp::keepalive()
 
 void TalkbackRtsp::teardown()
 {
+    if(m_pRtspInfo==NULL){
+        return ;
+    }
+    for(int n=0;n<m_pRtspInfo->sdp->media_num;n++){
+        if(m_pRtspInfo->sdp->media[n].bRtspSetUp==1){
+            Attribute_t attr;
+            if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[n].media_n.type,
+                                  SDP_ATTR_CONTROL,(void*)&attr,n)==RTSP_RET_FAIL){
+                VLOG(VLOG_ERROR,"get media audio attr fail");
+                continue;
+            }
+            talkbackRtspTeardown(attr.value,n);
+        }else{
+            continue;
+        }
+    }
 }
 
 void TalkbackRtsp::deinit()
@@ -253,12 +302,14 @@ bool TalkbackRtsp::talkbackRtspSetup_describe()
             "CSeq: %d\r\n"\
             "User-Agent: %s\r\n"\
             "Accept: %s\r\n"\
+            "Require: www.onvif.org/ver20/backchannel\r\n"\
             "\r\n";
     const char format2[]=
             "DESCRIBE %s %s\r\n"\
             "CSeq: %d\r\n"\
             "User-Agent: %s\r\n"\
             "Accept: %s\r\n"\
+            "Require: www.onvif.org/ver20/backchannel\r\n"\
             "Authorization: %s\r\n"\
             "\r\n";
     __TRY_AGAIN:
@@ -268,6 +319,7 @@ bool TalkbackRtsp::talkbackRtspSetup_describe()
     }else{
         sprintf(url,"rtsp://%s:%d/%s",m_pRtspInfo->ip,m_pRtspInfo->nPort,m_pRtspInfo->streamName);
         if(HTTP_AUTH_setup(m_pRtspInfo->auth,m_pRtspInfo->userName,m_pRtspInfo->passWord,url,"DESCRIBE",szAuth,sizeof(szAuth))==AUTH_RET_FAIL){
+            INFO_PRINT("talkbackRtspSetup_describe as talkbackRtspSetup_describe fail");
             return false;
         }
         sprintf(m_pRtspInfo->payload,format2,temp,RTSP_VERSION,++m_pRtspInfo->cseq,RTSP_USER_AGENT,SDP_MEDIA_TYPE,szAuth);
@@ -275,12 +327,15 @@ bool TalkbackRtsp::talkbackRtspSetup_describe()
     m_pRtspInfo->payloadSize=strlen(m_pRtspInfo->payload);
     VLOG(VLOG_DEBUG,"request (size:%d) :\r\n %s \r\n",m_pRtspInfo->payloadSize,m_pRtspInfo->payload);
     if(sendRtspPacket()==false){
+        INFO_PRINT("talkbackRtspSetup_describe as sendRtspPacket fail");
         return false;
     }
     if(readRtspMessage()==false){
+        INFO_PRINT("talkbackRtspSetup_describe as readRtspMessage fail");
         return false;
     }
     if(parseRtspResponse(&nStatusCode,temp)==false){
+        INFO_PRINT("talkbackRtspSetup_describe as parseRtspResponse fail");
         return false;
     }
     if((nStatusCode==rtspRStatusCodes[RTSP_RSC_UNAUTHORIZED].code)&&bAuthFlag==false){
@@ -289,7 +344,7 @@ bool TalkbackRtsp::talkbackRtspSetup_describe()
         //此处可以设置回调函数从外界 获取 用户名和密码,暂时不实现
         goto __TRY_AGAIN;
     }else if(nStatusCode==rtspRStatusCodes[RTSP_RSC_UNAUTHORIZED].code){
-        VLOG(VLOG_ERROR,"auth failed !!!");
+        INFO_PRINT("talkbackRtspSetup_describe as auth failed !!!");
         //可以设置回调告知外界，用户验证失败
         return false;
     }
@@ -310,7 +365,11 @@ bool TalkbackRtsp::talkbackRtspSetup_setup()
             if(m_pRtspInfo->sdp->media[i].media_n.format==0||
                     m_pRtspInfo->sdp->media[i].media_n.format==8){//pcma or pcmu
                 if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[i].media_n.type,
-                                      SDP_ATTR_CONTROL,(void*)&attr)==RTSP_RET_FAIL){
+                                      SDP_ATTR_SENDONLY,(void*)&attr,i)==RTSP_RET_FAIL){
+                    continue;
+                }
+                if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[i].media_n.type,
+                                      SDP_ATTR_CONTROL,(void*)&attr,i)==RTSP_RET_FAIL){
                     VLOG(VLOG_ERROR,"get media audio attr fail");
                     continue;
                 }
@@ -321,6 +380,7 @@ bool TalkbackRtsp::talkbackRtspSetup_setup()
                     goto CONNECT_ERR_EXIT;
                 }
                 iSetupMedia++;
+                m_pRtspInfo->sdp->media[i].bRtspSetUp=1;
             }else if(m_pRtspInfo->sdp->media[i].media_n.format>=96
                      ||m_pRtspInfo->sdp->media[i].media_n.format==20
                      ||m_pRtspInfo->sdp->media[i].media_n.format==21
@@ -329,7 +389,12 @@ bool TalkbackRtsp::talkbackRtspSetup_setup()
                 // 20 ~ 23 , unsigned payload type
                 // >= 96: dynamic payload type , need to get detail media type by rtpmap attribute
                 if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[i].media_n.type,
-                                      SDP_ATTR_RTP_MAP,(void*)&attr)==RTSP_RET_OK){
+                                      SDP_ATTR_SENDONLY,(void*)&attr,i)==RTSP_RET_FAIL){
+                    continue;
+                }
+
+                if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[i].media_n.type,
+                                      SDP_ATTR_RTP_MAP,(void*)&attr,i)==RTSP_RET_OK){
                     if(strncmp(attr.rtpmap.codec_type,"PCMU",strlen("PCMU"))==0||
                        strncmp(attr.rtpmap.codec_type,"PCMA",strlen("PCMA"))==0){
                         if(strncmp(attr.rtpmap.codec_type,"PCMA",strlen("PCMA"))==0){
@@ -338,7 +403,7 @@ bool TalkbackRtsp::talkbackRtspSetup_setup()
                             real_type=RTP_TYPE_PCMU;
                         }
                         if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[i].media_n.type,
-                                              SDP_ATTR_CONTROL,(void *)&attr)==RTSP_RET_FAIL){
+                                              SDP_ATTR_CONTROL,(void *)&attr,i)==RTSP_RET_FAIL){
                             INFO_PRINT("get media SDP_ATTR_CONTROL attr fail ,continue ,find next media");
                             continue;
                         }
@@ -347,6 +412,7 @@ bool TalkbackRtsp::talkbackRtspSetup_setup()
                             INFO_PRINT("talkbackRtspSetup_setup fail as setup audio fail ");
                             goto CONNECT_ERR_EXIT;
                         }
+                        m_pRtspInfo->sdp->media[i].bRtspSetUp=1;
                         iSetupMedia++;
                     }else{
                         VLOG(VLOG_DEBUG,"unknown audio codec type:%s",attr.rtpmap.codec_type);
@@ -374,6 +440,78 @@ CONNECT_ERR_EXIT:
     return false;
 }
 
+bool TalkbackRtsp::talkbackRtspPlay(char *control,int n)
+{
+    char temp[256];
+    char stream_url[128];
+    char *ptr = NULL;
+    int nStatus_code;
+    const char format[]=
+        "PLAY %s %s\r\n"\
+        "CSeq: %d\r\n"\
+        "User-Agent: %s\r\n"\
+        "Session: %s\r\n"\
+        "Range: npt=0.000-\r\n"\
+        "Require: www.onvif.org/ver20/backchannel\r\n"\
+        "\r\n";
+    strncpy(stream_url,m_pRtspInfo->streamName,sizeof(stream_url)-1);
+    if ((ptr = strstr(stream_url, "?")) != NULL) {
+        *ptr = '\0';
+    }
+    if(memcmp(control,"rtsp://",strlen("rtsp://"))==0){
+        sprintf(temp,"%s",control);
+    }else{
+        sprintf(temp,"rtsp://%s:%d/%s/%s",m_pRtspInfo->ip,m_pRtspInfo->nPort,stream_url,control);
+    }
+    sprintf(m_pRtspInfo->payload,format,temp,RTSP_VERSION,++m_pRtspInfo->cseq,RTSP_USER_AGENT,m_pRtspInfo->session_id);
+    m_pRtspInfo->payloadSize=strlen(m_pRtspInfo->payload);
+    VLOG(VLOG_DEBUG,"request (size : %d):\r\n%s\r\n",m_pRtspInfo->payloadSize,m_pRtspInfo->payload);
+    if(sendRtspPacket()==false){
+        return false;
+    }
+    if(readRtspMessage()==false){
+        return false;
+    }
+    if(parseRtspResponse(&nStatus_code,temp)==false){
+        if(nStatus_code==RTSP_RSC_UNSUPPORTED_TRANSPORT){
+            VLOG(VLOG_ERROR,"server do not support udp transport,and client do not support tcp transport");
+        }else{
+            VLOG(VLOG_ERROR,"set up fail (nstatus_code:%d)",nStatus_code);
+        }
+        return false;
+    }
+    return true;
+}
+
+void TalkbackRtsp::talkbackRtspTeardown(char *control, int n)
+{
+    char temp[256];
+    char stream_url[128];
+    char *ptr = NULL;
+    int nStatus_code;
+    const char format[]=
+        "TEARDOWN %s %s\r\n"\
+        "CSeq: %d\r\n"\
+        "User-Agent: %s\r\n"\
+        "Session: %s\r\n"\
+        "Require: www.onvif.org/ver20/backchannel\r\n"\
+        "\r\n";
+    strncpy(stream_url,m_pRtspInfo->streamName,sizeof(stream_url)-1);
+    if ((ptr = strstr(stream_url, "?")) != NULL) {
+        *ptr = '\0';
+    }
+    if(memcmp(control,"rtsp://",strlen("rtsp://"))==0){
+        sprintf(temp,"%s",control);
+    }else{
+        sprintf(temp,"rtsp://%s:%d/%s/%s",m_pRtspInfo->ip,m_pRtspInfo->nPort,stream_url,control);
+    }
+    sprintf(m_pRtspInfo->payload,format,temp,RTSP_VERSION,++m_pRtspInfo->cseq,RTSP_USER_AGENT,m_pRtspInfo->session_id);
+    m_pRtspInfo->payloadSize=strlen(m_pRtspInfo->payload);
+    VLOG(VLOG_DEBUG,"request (size : %d):\r\n%s\r\n",m_pRtspInfo->payloadSize,m_pRtspInfo->payload);
+
+    sendRtspPacket();
+}
+
 bool TalkbackRtsp::requestSeup(char *control, char *media_type, int type, int real_type)
 {
     char temp[256];
@@ -381,8 +519,8 @@ bool TalkbackRtsp::requestSeup(char *control, char *media_type, int type, int re
     char stream_url[128];
     char *ptr = NULL;
     int nStatus_code;
-    Rtp_t **rtp=NULL;
-    Rtcp_t **rtcp = NULL;
+    TalkbackRtcp **pTalkbackRtcp=NULL;
+    TalkbackRtp **pTalkbackRtp=NULL;
     unsigned int chn_port_tmp = 0;
     SOCK_t rtp_sock;
     int rtp_chn_port=0,rtcp_chn_port = 0;
@@ -391,6 +529,7 @@ bool TalkbackRtsp::requestSeup(char *control, char *media_type, int type, int re
             "CSeq: %d\r\n"\
             "User-Agent: %s\r\n"\
             "Transport: %s\r\n"\
+            "Require: www.onvif.org/ver20/backchannel\r\n"\
             "\r\n";
     const char format2[]=
             "SETUP %s %s\r\n"\
@@ -398,6 +537,7 @@ bool TalkbackRtsp::requestSeup(char *control, char *media_type, int type, int re
             "User-Agent: %s\r\n"\
             "Transport: %s\r\n"\
             "Session: %s\r\n"\
+            "Require: www.onvif.org/ver20/backchannel\r\n"\
             "\r\n";
     if(m_pRtspInfo->transport==RTP_AUTO){
 #if RTSP_RTP_DEF_TRANSPORT==RTSP_RTP_OVER_RTSP
@@ -466,11 +606,19 @@ TRY_INTERLEAVED_MODE:
         return false;
     }
     if(0==strcmp(media_type,"audio")){
-        rtp=(Rtp_t **)(&m_pRtspInfo->rtp_audio);
-        rtcp=(Rtcp_t **)(&m_pRtspInfo->rtcp_audio);
+        pTalkbackRtp=(TalkbackRtp **)(&m_pRtspInfo->pRtp_audio);
+#ifdef TALKBACK_RTCP_ENABLE
+        pTalkbackRtcp=(TalkbackRtcp **)(&m_pRtspInfo->pRtcp_audio);
+        m_pRtspInfo->pRtcp_audio=new TalkbackRtcp;
+#endif
+        m_pRtspInfo->pRtp_audio=new TalkbackRtp;
     }else if(0==strcmp(media_type,"video")){
-        rtp=(Rtp_t **)(&m_pRtspInfo->rtp_video);
-        rtcp=(Rtcp_t**)(&m_pRtspInfo->rtcp_video);
+#ifdef TALKBACK_RTCP_ENABLE
+        m_pRtspInfo->pRtcp_video=new TalkbackRtcp;
+        pTalkbackRtcp=(TalkbackRtcp **)(&m_pRtspInfo->pRtcp_video);
+#endif
+        pTalkbackRtp=(TalkbackRtp **)(&m_pRtspInfo->pRtp_video);
+        m_pRtspInfo->pRtp_video=new TalkbackRtp;
     }else{
         VLOG(VLOG_ERROR,"setup:unsuport payload type:%s  -%d",media_type,type);
         return false;
@@ -499,20 +647,11 @@ TRY_INTERLEAVED_MODE:
             return false;
         }
     }
-    /*
-    *rtp=rtp_client_new(m_pRtspInfo->low_transport,m_pRtspInfo->b_interleavedMode,rtp_sock,type,real_type,
-                        m_pRtspInfo->peername,rtp_chn_port,m_pRtspInfo->buffer_time);*/
-    if(NULL==*rtp){
-        VLOG(VLOG_ERROR,"setup fail as rtp_client_new fail");
-        return false;
-    }
-    int nRet=rtcp_init(rtcp,m_pRtspInfo->role,m_pRtspInfo->ssrc,m_pRtspInfo->low_transport,
-                       m_pRtspInfo->cast_type,m_pRtspInfo->b_interleavedMode,m_pRtspInfo->rtspSocket,
-                       rtcp_chn_port,m_pRtspInfo->client_port+1,*rtp);
-    if(nRet==RTSP_RET_FAIL){
-        VLOG(VLOG_ERROR,"setup fail as rtcp_init fail");
-        return false;
-    }
+    (*pTalkbackRtp)->init(rtp_sock,rtp_chn_port,m_pRtspInfo->client_port,m_pRtspInfo->low_transport,real_type);
+#ifdef TALKBACK_RTCP_ENABLE
+    (*pTalkbackRtcp)->init(rtcp_chn_port,m_pRtspInfo->client_port+1,m_pRtspInfo->low_transport,m_pRtspInfo->role,m_pRtspInfo->cast_type,m_pRtspInfo->b_interleavedMode,m_pRtspInfo->rtspSocket,*pTalkbackRtp);
+#endif
+
     return true;
 }
 
@@ -920,30 +1059,19 @@ int TalkbackRtsp::portManage_apply1_port3(unsigned int * const port)
 
 }
 
-Rtp_t *TalkbackRtsp::rtp_client_new(int interleaved, int sock, int payloadType, int mediaType, char *dstip, int dstport, int buffer_time)
+bool TalkbackRtsp::getSocketGroup(RTSP_SOCKET_GROUP *rsg)
 {
 
 }
 
-Rtp_t *TalkbackRtsp::rtp_server_new(unsigned int ssrc, int payloadType, int protocal, int interleaved, int sock, char *dstip, int dstport)
-{
 
-}
 
-int TalkbackRtsp::rtp_destroy(Rtp_t *rtp)
-{
 
-}
 
-int TalkbackRtsp::rtcp_init(Rtcp_t **r, int role, uint32_t src_id, int protocal, int cast_type, int interleaved, int rtsp_sock, int chn_port_s, int chn_port_c, Rtp_t *rtp)
-{
 
-}
 
-int TalkbackRtsp::rtcp_destroy(Rtcp_t *rtcp)
-{
 
-}
+
 
 
 
