@@ -26,6 +26,19 @@ TalkbackAudioDataCapture::~TalkbackAudioDataCapture()
 
 }
 
+bool TalkbackAudioDataCapture::checkClientIsSupportTalkbackEx()
+{
+    //阻塞很久
+    ALCdevice *device=NULL;
+    device= alcCaptureOpenDevice(NULL, SAMPLING_RATE,AL_FORMAT_MONO16, CAPTURE_BUFFER_LENGTH_MIN);
+    if(device!=NULL){
+        alcCaptureCloseDevice(device);
+        return true;
+    }else{
+        return false;
+    }
+}
+
 bool TalkbackAudioDataCapture::checkClientIsSupportTalkback()
 {
     if(m_bClientIsSupportTalkback){
@@ -169,11 +182,13 @@ int TalkbackAudioDataCapture::getFrameSize()
 {
     return 2*CAPTURE_BUFFER_LENGTH_MIN;
 }
-static bool isOpenalExistError(char *pString){
-    ALenum tError =alGetError();
+static bool isOpenalExistError(ALCdevice *tAudioDevice,char *pString){
+    ALenum tError =alcGetError(tAudioDevice);
     if(tError==AL_NO_ERROR){
+
         return true;
     }else{
+        INFO_PRINT(alcGetString(tAudioDevice,tError));
         INFO_PRINT(pString);
         return false;
     }
@@ -246,7 +261,7 @@ TALKBACK_THREAD_RET_TYPE TalkbackAudioDataCapture::startCodeThread(void *arg){
                 }else{
                 }
                 alcCaptureStart(tAudioDevice);
-                if(isOpenalExistError("alcCaptureStart error")==false){
+                if(isOpenalExistError(tAudioDevice,"alcCaptureStart error")==false){
                     m_bClientIsSupportTalkback=false;
                     tStep=AudioDataCaptureStep_default;
                     break;
@@ -316,12 +331,18 @@ TALKBACK_THREAD_RET_TYPE TalkbackAudioDataCapture::startCodeThread(void *arg){
             break;
         case AudioDataCaptureStep_deinit:{
                 //回收资源
+            INFO_PRINT("start AudioDataCaptureStep_deinit");
             if(NULL!=tAudioDevice){
-                alcCaptureStop(tAudioDevice);
+                INFO_PRINT("start alcCaptureStop AudioDataCaptureStep_deinit");
+                if(m_bClientIsSupportTalkback==true){
+                    alcCaptureStop(tAudioDevice);
+                }
+                INFO_PRINT("start alcCaptureCloseDevice AudioDataCaptureStep_deinit");
                 alcCaptureCloseDevice(tAudioDevice);
             }
             //移除code 队列
             //调用回调，告知外界
+            INFO_PRINT("start errorCallBack AudioDataCaptureStep_deinit");
             errorCallBack(DataCapture_Thread_Unwork,"deinit func been called");
             //移除回调队列
             bStop=true;
@@ -336,18 +357,22 @@ bool TalkbackAudioDataCapture::reCheckClientIsSupportTalkback()
 {
     TalkbackThread::mSleep(100);
     if(m_bThreadStop==false){
-        return m_bClientIsSupportTalkback;
+        if(m_bClientIsSupportTalkback==false){
+            int nCount=0;
+            while(nCount<20){
+                nCount++;
+                TalkbackThread::mSleep(10);
+                if(m_bClientIsSupportTalkback){
+                    break;
+                }
+            }
+            return m_bClientIsSupportTalkback;
+        }else{
+            return true;
+        }
     }else{
         //check
-        ALCdevice *device = alcCaptureOpenDevice(NULL, SAMPLING_RATE,AL_FORMAT_MONO16, CAPTURE_BUFFER_LENGTH_MIN);
-
-        if(device){
-            alcCaptureCloseDevice(device);
-            return true;
-        }else{
-            alcCaptureCloseDevice(device);
-            return false;
-        }
+        return false;
     }
 
 }
@@ -368,9 +393,9 @@ void TalkbackAudioDataCapture::errorCallBack(tagAudioDataCaptureError tError, ch
     }
     m_tCaptureCallbackListLock.unlock();
 }
-void TalkbackAudioDataCapture:: copyBuffToContexList(int n,int nMax,char *pBuff){
+void TalkbackAudioDataCapture:: copyBuffToContexList(int n,talkback_int64 nMax,char *pBuff){
     //
-    int nMin=nMax;
+    talkback_int64 nMin=nMax;
     int nPlace=0;//找到的目标位置
     for(int i=0;i<AUDIODATALISTSIZE;i++){
         if(m_pContexList[n]->tDataList[i].nTimeStamp==0){

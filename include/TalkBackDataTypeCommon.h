@@ -54,7 +54,7 @@ typedef struct __tagTalkbackContext{
     char    passWord[256];
     int     nPort;
     char    url[256];
-    char    ip[256];
+    char    ip[20];
     TalkbackInterfaceErrorCallback errorEventHook;
 }tagTalkbackContext,*lpTalkbackContext;
 

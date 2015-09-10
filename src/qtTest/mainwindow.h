@@ -35,6 +35,8 @@ private slots:
 
     void on_removeDeviceFromTalkback_clicked();
 
+    void on_updateCode_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTimer m_tTime;

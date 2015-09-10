@@ -27,6 +27,9 @@ extern "C"{
 #define RTSP_MODE_PLAY		(0)
 #define RTSP_MODE_RECORD	(1)
 
+#if 0
+#define TALKBACK_RTCP_ENABLE          (0)
+#endif
 typedef struct _RStatusCode{
     int code;
     const char *info;

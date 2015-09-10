@@ -1,14 +1,15 @@
 #include "talkbackcore.h"
 #include "TalkBackCommonTool.h"
 #include "AudioData.h"
-TalkbackCore::TalkbackCore()
+TalkbackCore::TalkbackCore():
+    m_pRtsp(NULL),
+    m_pRtspInfo(NULL),
+    m_pTalkbackContext(NULL),
+    m_tThreadId(0),
+    m_bThreadStop(true),
+    m_bStartTalkback(false)
 {
-    m_tThreadId=0;
-    m_bThreadStop=true;
-    m_bStartTalkback=false;
-    m_pTalkbackContext=NULL;
-    m_pRtp=NULL;
-    m_pRtsp=NULL;
+
 }
 
 bool TalkbackCore::checkClientIsSupportTalkback()
@@ -76,6 +77,7 @@ typedef enum __tagTalkbackCoreThreadStep{
     TalkbackCoreThreadStep_play_rtsp,
     TalkbackCoreThreadStep_init_rtp,
     TalkbackCoreThreadStep_sendbuf_rtp,
+    TalkbackCoreThreadStep_read_data,
     TalkbackCoreThreadStep_teardown_rtsp,
     TalkbackCoreThreadStep_keepalive_rtsp,
     TalkbackCoreThreadStep_default,
@@ -85,6 +87,9 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
     bool bStop=false;
     tagTalkbackCoreThreadStep tStep=TalkbackCoreThreadStep_init;
     bool bIsRtspPlay=false;
+    bool bListFlags_keepalive=true;
+    bool bListFlags_sendAudioData=true;
+    bool bListFlags_readData=true;
     while (bStop==false) {
         switch (tStep) {
         case TalkbackCoreThreadStep_init:{
@@ -136,6 +141,14 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                 }
             }
             break;
+        case TalkbackCoreThreadStep_read_data:{
+                if(talkbackCoreThreadStep_read_data()){
+                    tStep=TalkbackCoreThreadStep_default;
+                }else{
+                    tStep=TalkbackCoreThreadStep_deinit;
+                }
+        }
+            break;
         case TalkbackCoreThreadStep_teardown_rtsp:{
                 talkbackCoreThreadStep_teardown_rtsp();
                 tStep=TalkbackCoreThreadStep_deinit;
@@ -151,16 +164,40 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
             break;
         case TalkbackCoreThreadStep_default:{
                 if(m_bThreadStop==false){
-                    if(isTimeToSendRtspKeepAlive()){
-                        tStep=TalkbackCoreThreadStep_keepalive_rtsp;
-                    }else{
-                        if(isTimeToSendAudioBuffer()){
-                        tStep=TalkbackCoreThreadStep_sendbuf_rtp;
-                        }else{
-                            //休眠
-                        TalkbackThread::mSleep(10);
-                        tStep=TalkbackCoreThreadStep_default;
+                    //循环调度 控制
+                    if(bListFlags_keepalive==true){
+                        bListFlags_keepalive=false;
+                        if(isTimeToSendRtspKeepAlive()){
+                           tStep=TalkbackCoreThreadStep_keepalive_rtsp;
+                           goto DEFAULT_CONTROL;
                         }
+                    }
+                    if(bListFlags_sendAudioData==true){
+                        bListFlags_sendAudioData=false;
+                        if(isTimeToSendAudioBuffer()){
+                           tStep=TalkbackCoreThreadStep_sendbuf_rtp;
+                           goto DEFAULT_CONTROL;
+                        }
+                    }
+                    if(bListFlags_readData==true){
+                        bListFlags_readData=false;
+                        if(isTimeToReadSocketData()){
+                            tStep=TalkbackCoreThreadStep_read_data;
+                            goto DEFAULT_CONTROL;
+                        }
+                    }
+
+                DEFAULT_CONTROL:
+                    //reset flags
+                    if(bListFlags_readData==false&&bListFlags_sendAudioData==false&&bListFlags_keepalive==false){
+                        bListFlags_readData=true;
+                        bListFlags_sendAudioData=true;
+                        bListFlags_keepalive=true;
+                    }
+                    if(tStep!=TalkbackCoreThreadStep_default){
+                        //go to do work
+                    }else{
+                        TalkbackThread::mSleep(10);
                     }
                 }else{
                     if(bIsRtspPlay==true){
@@ -172,11 +209,12 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
             }
             break;
         case TalkbackCoreThreadStep_deinit:{
-
+                bStop=true;
             }
             break;
         }
     }
+    INFO_PRINT("TalkbackCore thread end");
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_init()
@@ -186,14 +224,15 @@ bool TalkbackCore::talkbackCoreThreadStep_init()
         delete m_pRtsp;
         m_pRtsp=NULL;
     }
-    if(NULL!=m_pRtp){
-        m_pRtp->deinit();;
-        delete m_pRtp;
-        m_pRtp=NULL;
-    }
-    m_pRtp=new TalkbackRtp;
-    m_pRtsp=new TalkbackRtsp;
 
+    m_pRtsp=new TalkbackRtsp;
+    if(NULL!=m_pRtspInfo){
+        deinitRtspInfo();
+    }
+
+    initRtspInfo();
+    m_pRtsp->init(m_pRtspInfo);
+    return true;
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_setup_rtsp()
@@ -208,12 +247,17 @@ bool TalkbackCore::talkbackCoreThreadStep_play_rtsp()
 
 bool TalkbackCore::talkbackCoreThreadStep_init_rtp()
 {
-    return m_pRtp->init(m_pRtpInfo);
+
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_sendbuf_rtp()
 {
-    return m_pRtp->sendbuf();
+
+}
+
+bool TalkbackCore::talkbackCoreThreadStep_read_data()
+{
+
 }
 
 void TalkbackCore::talkbackCoreThreadStep_teardown_rtsp()
@@ -241,22 +285,57 @@ bool TalkbackCore::isTimeToSendAudioBuffer()
     return false;
 }
 
-void TalkbackCore::initRtspInfo()
+bool TalkbackCore::isTimeToReadSocketData()
 {
 
+}
+
+void TalkbackCore::initRtspInfo()
+{
+    m_pRtspInfo=new tagTalkbackRtspInfo;
+    m_pRtspInfo->role=RTSP_CLIENT;
+    memset(m_pRtspInfo->userName,0,sizeof(m_pRtspInfo->userName));
+    memcpy(m_pRtspInfo->userName,m_pTalkbackContext->userName,strlen(m_pTalkbackContext->userName));
+    memset(m_pRtspInfo->passWord,0,sizeof(m_pRtspInfo->passWord));
+    memcpy(m_pRtspInfo->passWord,m_pTalkbackContext->passWord,strlen(m_pTalkbackContext->passWord));
+    m_pRtspInfo->nPort=m_pTalkbackContext->nPort;
+    memset(m_pRtspInfo->url,0,sizeof(m_pRtspInfo->url));
+    memcpy(m_pRtspInfo->url,m_pTalkbackContext->url,strlen(m_pTalkbackContext->url));
+    memset(m_pRtspInfo->ip,0,sizeof(m_pRtspInfo->ip));
+    memcpy(m_pRtspInfo->ip,m_pTalkbackContext->ip,strlen(m_pTalkbackContext->ip));
+    memset(m_pRtspInfo->streamName,0,sizeof(m_pRtspInfo->streamName));
+    sscanf(m_pRtspInfo->url,"rtsp://%*[^/]/%s",m_pRtspInfo->streamName);
+    memset(m_pRtspInfo->session_id,0,sizeof(m_pRtspInfo->session_id));
+    m_pRtspInfo->rtspSocket=-1;
+    m_pRtspInfo->payloadSize=0;
+    m_pRtspInfo->cseq=0;
+    m_pRtspInfo->bLogin=true;
+    m_pRtspInfo->sdp=NULL;
+    m_pRtspInfo->session_timeout=60;
+    m_pRtspInfo->auth=NULL;
+    m_pRtspInfo->rtpseq=0;
+    m_pRtspInfo->rtptime=0;
+    m_pRtspInfo->stream_type = RTSP_STREAM_VIDEO | RTSP_STREAM_AUDIO;
+    m_pRtspInfo->buffer_time=0;
+    m_pRtspInfo->low_transport=RTP_TRANSPORT_UDP;
+    m_pRtspInfo->cast_type=RTP_UNICAST;
+    m_pRtspInfo->client_port=0;
+    m_pRtspInfo->server_port=0;
+    m_pRtspInfo->channel=0;
+    m_pRtspInfo->ssrc=0;
+    m_pRtspInfo->work_mode=RTSP_MODE_PLAY;
+    m_pRtspInfo->transport=RTP_AUTO;
+    m_pRtspInfo->pRtp_audio=NULL;
+    m_pRtspInfo->pRtp_video=NULL;
+    m_pRtspInfo->pRtcp_audio=NULL;
+    m_pRtspInfo->pRtcp_video=NULL;
 }
 
 void TalkbackCore::deinitRtspInfo()
 {
-
+    //fix me
+    delete m_pRtspInfo;
+    m_pRtspInfo=NULL;
 }
 
-void TalkbackCore::initRtpInfo()
-{
 
-}
-
-void TalkbackCore::deinitRtpInfo()
-{
-
-}
