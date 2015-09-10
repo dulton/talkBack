@@ -394,7 +394,7 @@ int SOCK_tcp_connect2(char *target_ip, int target_port, int connect_timeout, int
 #endif
 }
 
-SOCK_t SOCK_udp_init_2(char *bindip,int &bind_port,int rwtimeout){
+SOCK_t SOCK_udp_init_2(char *bindip,unsigned short &bind_port,int rwtimeout){
     int ret;
     int on=1;
     int buf_size;
