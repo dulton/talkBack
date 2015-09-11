@@ -8,6 +8,7 @@
 #include "talkbackRtpDef.h"
 #include "talkbackrtp.h"
 #include "talkbackrtcp.h"
+#include "TalkBackDataTypeCommon.h"
 
 typedef struct rtsp_socket_group
 {
@@ -35,7 +36,8 @@ typedef struct __tagTalkbackRtspInfo{
     SessionDesc_t *sdp;
     char    session_id[32];
     uint32_t session_timeout;
-
+    uint64_t session_lastTime;//单位秒
+    uint64_t audioDataCheckTime;
     unsigned int rtpseq;
     unsigned int rtptime;
     Authentication_t *auth;
@@ -55,12 +57,14 @@ typedef struct __tagTalkbackRtspInfo{
 
     enRTP_TRANSPORT transport;
 
-
+    RtpMapAttr_t    rtpMap;
+    tagAudioCodeMode tAudioCodeMode;
 
     TalkbackRtcp *pRtcp_video;
     TalkbackRtcp *pRtcp_audio;
     TalkbackRtp *pRtp_video;
     TalkbackRtp *pRtp_audio;
+    RTSP_SOCKET_GROUP *pSocketGroup;
 }tagTalkbackRtspInfo;
 class TalkbackRtsp
 {
@@ -80,6 +84,7 @@ private:
     bool talkbackRtspSetup_setup();
     bool talkbackRtspPlay(char *control,int n);
     void talkbackRtspTeardown(char *control,int n);
+    bool talkbackRtspKeepalive(char *control,int n);
     bool requestSeup(char *control,char *media_type,int type,int real_type);//发送 setup 请求
 
     bool sendRtspPacket();//发送 rtsp 包
@@ -92,8 +97,7 @@ private:
 
     uint32_t hash_string(char *str);
     //申请可用端口
-    int portManage_apply2_port3(unsigned int * const port);
-    int portManage_apply1_port3(unsigned int * const port);
+
 
     bool getSocketGroup(RTSP_SOCKET_GROUP *rsg);
     int getAvailablePort(unsigned short &port);

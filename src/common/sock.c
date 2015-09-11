@@ -394,7 +394,7 @@ int SOCK_tcp_connect2(char *target_ip, int target_port, int connect_timeout, int
 #endif
 }
 
-SOCK_t SOCK_udp_init_2(char *bindip,unsigned short &bind_port,int rwtimeout){
+SOCK_t SOCK_udp_init_2(char *bindip,unsigned short *bind_port,int rwtimeout){
     int ret;
     int on=1;
     int buf_size;
@@ -451,20 +451,26 @@ SOCK_t SOCK_udp_init_2(char *bindip,unsigned short &bind_port,int rwtimeout){
     my_addr.sin_family=AF_INET;
     my_addr.sin_addr.s_addr=bindip?inet_addr(bindip):INADDR_ANY;
     my_addr.sin_port=0;
+
+    ret =bind(sock,(SOCKADDR_t*)&my_addr,sizeof(SOCKADDR_t));
     if(ret<0){
         SOCK_close(sock);
         return -1;
     }
+
     SOCKADDR_t addr;
-    SOCKADDR_IN_t *addr_in=(SOCKADDR_IN_t)&addr;
+    SOCKADDR_IN_t *addr_in=(SOCKADDR_IN_t *)&addr;
     SOCKLEN_t sock_len=sizeof(SOCKADDR_t);
+
+
+
     ret =getsockname(sock,&addr,&sock_len);
     if(ret!=0){
         SOCK_close(sock);
         return -1;
     }
 
-    bind_port=ntohs(addr_in->sin_port);
+    *bind_port=ntohs(addr_in->sin_port);
     return sock;
 }
 SOCK_t SOCK_udp_init(char *bindip, int port,int rwtimeout/* unit: millisecond */)

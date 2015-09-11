@@ -16,7 +16,7 @@
 //#define VLOG_FILE	"vlog.txt"
 //static FILE *g_log_file=NULL;
 
-VLOG_Level_t debuglevel = VLOG_ALL;
+VLOG_Level_t debuglevel = VLOG_INFO;
 static int neednl;
 static FILE *fmsg;
 

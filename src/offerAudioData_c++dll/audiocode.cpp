@@ -92,6 +92,7 @@ int AudioCode::getSpecAudioCodeModeFrameBuffSize(tagAudioCodeMode tCodeMode)
 bool AudioCode::getData(void *parm, char *pBuff, int pBufferSize, int &nSize,talkback_int64 &nTimeStamp)
 {
     nSize=0;
+    nTimeStamp=0;
     m_pApplyAudioNodeListLock->lock();
     AudioCodeSpace::tagApplyAudioNode *pTemp=m_pApplyAudioNodeList;
     while(pTemp!=NULL){
@@ -113,6 +114,9 @@ bool AudioCode::getData(void *parm, char *pBuff, int pBufferSize, int &nSize,tal
                 nTimeStamp=pTemp->tDataNodeList[nPlace].tTimeStamp;
                 pTemp->tDataNodeList[nPlace].tTimeStamp=0;
                 nSize=pTemp->tDataNodeList[nPlace].nSize;
+                if(nSize==0&&nTimeStamp!=0){
+                    INFO_PRINT("stop");
+                }
                 pTemp->tDataNodeList[nPlace].nSize=0;
             }
             break;
@@ -161,7 +165,7 @@ bool AudioCode::applyAudio(void *parm, tagAudioCodeMode tCodeMode, AudioErrorCal
         while(pNext->pNext!=NULL){
             pNext=pNext->pNext;
         }
-        pNext=pTemp;
+        pNext->pNext=pTemp;
     }
     if(tCodeMode==AUDIO_CODE_G711_A){
         m_nNeedEncodeCountG711_Alaw++;

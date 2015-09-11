@@ -81,7 +81,7 @@ int SOCK_tcp_connect2(char *ip, int port, int connect_timeout, int rwtimeout);//
 int SOCK_set_buf_size(SOCK_t sock, unsigned int sndBufSize, unsigned int rcvBufSize); /*if 0 , use default*/
 int SOCK_tcp_init(SOCK_t fd,int rwtimeout);
 SOCK_t SOCK_udp_init(char *bindip, int bind_port,int rwtimeout);
-SOCK_t SOCK_udp_init_2(char *bindip,unsigned short &bind_port,int rwtimeout);
+SOCK_t SOCK_udp_init_2(char *bindip,unsigned short *bind_port,int rwtimeout);
 SOCK_t SOCK_broadcast_udp_init(char *bindip, int port,int rwtimeout/* unit: millisecond */);
 SOCK_t SOCK_multicast_udp_init(char *group, int port,int rwtimeout/* unit: millisecond */, char *binda);
 SOCK_t SOCK_raw_init(int protocal, int timeout);

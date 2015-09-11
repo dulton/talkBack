@@ -9,13 +9,13 @@ TalkbackRtcp::TalkbackRtcp()
     m_pRtcpInfo->rtspSocket=-1;
 }
 
-bool TalkbackRtcp::init(int rtcp_server_port, int rtcp_client_port, int low_transport, int role, int cast_type, int b_interleavedMode, SOCK_t rtspSocket, TalkbackRtp *pRtp)
+bool TalkbackRtcp::init(int rtcp_server_port, int rtcp_client_port, int low_transport, int role, int cast_type, int b_interleavedMode, SOCK_t rtspSocket, SOCK_t rtcpSocket,TalkbackRtp *pRtp)
 {
     if(NULL!=m_pRtcpInfo){
         if(b_interleavedMode==true){
             m_pRtcpInfo->rtcp_sock=rtspSocket;
         }else{
-            m_pRtcpInfo->rtcp_sock=rtcp_init_transport(cast_type,low_transport,(role==RTSP_SERVER) ? rtcp_server_port : rtcp_client_port);
+            m_pRtcpInfo->rtcp_sock=rtcpSocket;//rtcp_init_transport(cast_type,low_transport,(role==RTSP_SERVER) ? rtcp_server_port : rtcp_client_port);
         }
         m_pRtcpInfo->b_interleavedMode=b_interleavedMode;
         m_pRtcpInfo->rtcp_client_port=rtcp_client_port;

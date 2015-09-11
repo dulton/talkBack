@@ -5,6 +5,7 @@ TalkbackCore::TalkbackCore():
     m_pRtsp(NULL),
     m_pRtspInfo(NULL),
     m_pTalkbackContext(NULL),
+    m_pAudioDataContext(NULL),
     m_tThreadId(0),
     m_bThreadStop(true),
     m_bStartTalkback(false)
@@ -74,6 +75,7 @@ bool TalkbackCore::pauseTalkback()
 typedef enum __tagTalkbackCoreThreadStep{
     TalkbackCoreThreadStep_init,
     TalkbackCoreThreadStep_setup_rtsp,
+    TalkbackCoreThreadStep_init_audioData,
     TalkbackCoreThreadStep_play_rtsp,
     TalkbackCoreThreadStep_init_rtp,
     TalkbackCoreThreadStep_sendbuf_rtp,
@@ -104,7 +106,9 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
             break;
         case TalkbackCoreThreadStep_setup_rtsp:{
                 if(talkbackCoreThreadStep_setup_rtsp()){
-                    tStep=TalkbackCoreThreadStep_play_rtsp;
+                    tStep=TalkbackCoreThreadStep_init_audioData;
+                    m_pRtspInfo->session_lastTime=TalkbackThread::currentTime()/1000;
+                    m_pRtspInfo->audioDataCheckTime=TalkbackThread::currentTime();
                     INFO_PRINT("TalkbackCoreThreadStep_setup_rtsp success");
                 }else{
                     tStep=TalkbackCoreThreadStep_deinit;
@@ -112,6 +116,14 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                 }
             }
             break;
+        case TalkbackCoreThreadStep_init_audioData:{
+            if(talkbackCoreThreadStep_init_audioData()){
+                tStep=TalkbackCoreThreadStep_play_rtsp;
+            }else{
+                tStep=TalkbackCoreThreadStep_deinit;
+                INFO_PRINT("talkbackCoreThreadStep_init_audioData fail");
+            }
+        }
         case TalkbackCoreThreadStep_play_rtsp:{
                 if(talkbackCoreThreadStep_play_rtsp()){
                     tStep=TalkbackCoreThreadStep_init_rtp;
@@ -209,6 +221,9 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
             }
             break;
         case TalkbackCoreThreadStep_deinit:{
+                talkbackCoreThreadStep_deinit_audioData();
+                talkbackCoreThreadStep_deinit_rtp();
+                talkbackCoreThreadStep_deinit();
                 bStop=true;
             }
             break;
@@ -235,9 +250,60 @@ bool TalkbackCore::talkbackCoreThreadStep_init()
     return true;
 }
 
+void TalkbackCore::talkbackCoreThreadStep_deinit()
+{
+
+}
+
 bool TalkbackCore::talkbackCoreThreadStep_setup_rtsp()
 {
     return m_pRtsp->setup();
+}
+void errorCallback(void *parm,tagTalkbackAudioError tError,char *pErrorInfo){
+}
+bool TalkbackCore::talkbackCoreThreadStep_init_audioData()
+{
+    if(m_pAudioDataContext==NULL){
+        m_pAudioDataContext=new tagAudioContext;
+        m_pAudioDataContext->pUserContext=this;
+        m_pAudioDataContext->pAudioDataContext=NULL;
+    }
+    for(int n=0;n<m_pRtspInfo->sdp->media_num;n++){
+        if(m_pRtspInfo->sdp->media[n].bRtspSetUp==1){
+            Attribute_t attr;
+            if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[n].media_n.type,
+                                  SDP_ATTR_RTP_MAP,(void*)&attr,n)==RTSP_RET_FAIL){
+                continue;
+            }
+            attr.rtpmap.codec_type;
+            attr.rtpmap.freq;
+            attr.rtpmap.payload_type;
+            if(strcmp(attr.rtpmap.codec_type,"PCMA")==0){
+                m_pRtspInfo->tAudioCodeMode=AUDIO_CODE_G711_A;
+            }else if(strcmp(attr.rtpmap.codec_type,"PCMU")==0){
+                m_pRtspInfo->tAudioCodeMode=AUDIO_CODE_C711_U;
+            }else{
+                INFO_PRINT("talkbackCoreThreadStep_init_audioData fail as do not support the audio type");
+                return false;
+            }
+            m_pRtspInfo->rtpMap.freq=attr.rtpmap.freq;
+            m_pRtspInfo->rtpMap.payload_type=attr.rtpmap.payload_type;
+            memcpy(m_pRtspInfo->rtpMap.codec_type,attr.rtpmap.codec_type,strlen(attr.rtpmap.codec_type));
+            bool bRet=applyAudio(m_pAudioDataContext,m_pRtspInfo->tAudioCodeMode,errorCallback);
+            if(bRet==false){
+                INFO_PRINT("talkbackCoreThreadStep_init_audioData fail as applyAudio fail");
+            }
+            return bRet;
+        }else{
+            continue;
+        }
+    }
+    return true;
+}
+
+void TalkbackCore::talkbackCoreThreadStep_deinit_audioData()
+{
+    //fix me
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_play_rtsp()
@@ -247,12 +313,45 @@ bool TalkbackCore::talkbackCoreThreadStep_play_rtsp()
 
 bool TalkbackCore::talkbackCoreThreadStep_init_rtp()
 {
-
+    return true;
 }
 
+void TalkbackCore::talkbackCoreThreadStep_deinit_rtp()
+{
+//fix me
+}
+uint64_t g_nTime=0;
 bool TalkbackCore::talkbackCoreThreadStep_sendbuf_rtp()
 {
+    int nSize=0;
+    int nBuffsize=getSpecAudioCodeModeFrameBuffSize(m_pRtspInfo->tAudioCodeMode);
+    char *pBuffer=new char[nBuffsize];
+    memset(pBuffer,0,nBuffsize);
+    bool bRet=true;
+    long long nTimeStamp=0;
+    while(bRet){
+        if(m_pAudioDataContext->pAudioDataContext!=NULL){
+            bRet=getData(m_pAudioDataContext,pBuffer,nBuffsize,nSize,nTimeStamp);
+            if(bRet){
+                int nDiv=nTimeStamp-g_nTime;
+                g_nTime=nTimeStamp;
+                //INFO_PRINT(nDiv);
+                //等待修正
+                if(nTimeStamp==0){
+                    printf("nSize:%d;nDiv:%d;nTimeStamp:%lld\n",nSize,nDiv,nTimeStamp);
+                }
 
+                if(nDiv<0){
+                    printf("error data:nDiv:%d;nTimeStamp:%lld\n",nDiv,nTimeStamp);
+                    return true;
+                }
+                //send
+            }
+        }else{
+            bRet=false;
+        }
+    }
+    return true;
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_read_data()
@@ -272,13 +371,24 @@ bool TalkbackCore::talkbackCoreThreadStep_keepalive_rtsp()
 
 bool TalkbackCore::isTimeToSendRtspKeepAlive()
 {
-
+    uint64_t session_currentTime=TalkbackThread::currentTime()/1000;//单位秒
+    //默认比timeout的时间 提早5s发送
+    if((session_currentTime+5-m_pRtspInfo->session_lastTime)>10){
+        m_pRtspInfo->session_lastTime=session_currentTime;
+        return true;
+    }else{
+        return false;
+    }
 }
 
 bool TalkbackCore::isTimeToSendAudioBuffer()
 {
-    if(m_bStartTalkback){
-
+    if(m_bStartTalkback==true){
+        uint64_t currentTime=TalkbackThread::currentTime();//单位毫秒
+        if(currentTime-m_pRtspInfo->audioDataCheckTime>20){
+            m_pRtspInfo->audioDataCheckTime=currentTime;
+            return true;
+        }
     }else{
 
     }
@@ -287,7 +397,7 @@ bool TalkbackCore::isTimeToSendAudioBuffer()
 
 bool TalkbackCore::isTimeToReadSocketData()
 {
-
+    return false;
 }
 
 void TalkbackCore::initRtspInfo()
@@ -329,6 +439,11 @@ void TalkbackCore::initRtspInfo()
     m_pRtspInfo->pRtp_video=NULL;
     m_pRtspInfo->pRtcp_audio=NULL;
     m_pRtspInfo->pRtcp_video=NULL;
+    m_pRtspInfo->pSocketGroup=new RTSP_SOCKET_GROUP;
+    m_pRtspInfo->pSocketGroup->rtcp_port=0;
+    m_pRtspInfo->pSocketGroup->rtcp_socket=-1;
+    m_pRtspInfo->pSocketGroup->rtp_port=0;
+    m_pRtspInfo->pSocketGroup->rtp_socket=-1;
 }
 
 void TalkbackCore::deinitRtspInfo()

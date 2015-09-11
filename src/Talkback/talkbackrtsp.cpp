@@ -5,6 +5,7 @@
 
 #include "TalkBackCommonTool.h"
 #include "talkbackRtpDef.h"
+#include "talkbackthread.h"
 
 TalkbackRtsp::TalkbackRtsp():m_pRtspInfo(NULL)
 {
@@ -153,6 +154,7 @@ bool TalkbackRtsp::setup()
             break;
         case tagTalkbackRtspSetup_setup:{
                 if(talkbackRtspSetup_setup()){
+
                     tStep=tagTalkbackRtspSetup_success;
                 }else{
                     tStep=tagTalkbackRtspSetup_fail;
@@ -215,7 +217,25 @@ bool TalkbackRtsp::play()
 
 bool TalkbackRtsp::keepalive()
 {
-
+    if(m_pRtspInfo==NULL){
+        return false;
+    }
+    for(int n=0;n<m_pRtspInfo->sdp->media_num;n++){
+        if(m_pRtspInfo->sdp->media[n].bRtspSetUp==1){
+            Attribute_t attr;
+            if(SDP_get_media_attr(m_pRtspInfo->sdp,m_pRtspInfo->sdp->media[n].media_n.type,
+                                  SDP_ATTR_CONTROL,(void*)&attr,n)==RTSP_RET_FAIL){
+                VLOG(VLOG_ERROR,"get media audio attr fail");
+                continue;
+            }
+            if(talkbackRtspKeepalive(attr.value,n)==false){
+                return false;
+            }
+        }else{
+            continue;
+        }
+    }
+    return true;
 }
 
 void TalkbackRtsp::teardown()
@@ -482,7 +502,70 @@ bool TalkbackRtsp::talkbackRtspPlay(char *control,int n)
     }
     return true;
 }
+bool TalkbackRtsp::talkbackRtspKeepalive(char *control, int n)
+{
+    char temp[256];
+    char tmp[256];
+    char stream_url[128];
+    char *ptr = NULL;
+    int nStatus_code;
+    char payload[RTSP_BUF_SIZE];
+    int payload_size;
+    const char format[]=
+        "OPTIONS %s %s\r\n"\
+        "CSeq: %d\r\n"\
+        "User-Agent: %s\r\n"\
+        "Require: www.onvif.org/ver20/backchannel\r\n"\
+        "\r\n";
 
+    const char format2[]=
+        "GET_PARAMETER %s %s\r\n"\
+        "CSeq: %d\r\n"\
+        "User-Agent: %s\r\n"\
+        "Session: %s\r\n"\
+        "Require: www.onvif.org/ver20/backchannel\r\n"\
+        "\r\n";
+    strncpy(stream_url,m_pRtspInfo->streamName,sizeof(stream_url)-1);
+    if ((ptr = strstr(stream_url, "?")) != NULL) {
+        *ptr = '\0';
+    }
+    if(memcmp(control,"rtsp://",strlen("rtsp://"))==0){
+        sprintf(temp,"%s",control);
+    }else{
+        sprintf(temp,"rtsp://%s:%d/%s/%s",m_pRtspInfo->ip,m_pRtspInfo->nPort,stream_url,control);
+    }
+    if(strstr(m_pRtspInfo->allow_method,"GET_PARAMETER")!=NULL){
+        sprintf(m_pRtspInfo->payload,format2,temp,RTSP_VERSION,++m_pRtspInfo->cseq,RTSP_USER_AGENT,m_pRtspInfo->session_id);
+        m_pRtspInfo->payloadSize=strlen(m_pRtspInfo->payload);
+        if(sendRtspPacket()==false){
+            VLOG(VLOG_DEBUG,"(file:%s),(line:%d)sendRtspPacket  fail:%s\r\n",__func__,__LINE__,m_pRtspInfo->payload);
+            return false;
+        }
+        if(readRtspMessage()==false){
+            VLOG(VLOG_DEBUG,"(file:%s),(line:%d)readRtspMessage  fail:%s\r\n",__func__,__LINE__,m_pRtspInfo->payload);
+            return false;
+        }
+        if(parseRtspResponse(&nStatus_code,tmp)==false){
+            VLOG(VLOG_DEBUG,"(file:%s),(line:%d)parseRtspResponse  fail:%s\r\n",__func__,__LINE__,m_pRtspInfo->payload);
+            return false;
+        }
+    }
+    sprintf(m_pRtspInfo->payload,format,temp,RTSP_VERSION,++m_pRtspInfo->cseq,RTSP_USER_AGENT);
+    m_pRtspInfo->payloadSize=strlen(m_pRtspInfo->payload);
+    if(sendRtspPacket()==false){
+        VLOG(VLOG_DEBUG,"(file:%s),(line:%d)sendRtspPacket  fail:%s\r\n",__func__,__LINE__,m_pRtspInfo->payload);
+        return false;
+    }
+    if(readRtspMessage()==false){
+        VLOG(VLOG_DEBUG,"(file:%s),(line:%d)readRtspMessage  fail:%s\r\n",__func__,__LINE__,m_pRtspInfo->payload);
+        return false;
+    }
+    if(parseRtspResponse(&nStatus_code,tmp)==false){
+        VLOG(VLOG_DEBUG,"(file:%s),(line:%d)parseRtspResponse  fail:%s\r\n",__func__,__LINE__,m_pRtspInfo->payload);
+        return false;
+    }
+    return true;
+}
 void TalkbackRtsp::talkbackRtspTeardown(char *control, int n)
 {
     char temp[256];
@@ -511,6 +594,8 @@ void TalkbackRtsp::talkbackRtspTeardown(char *control, int n)
 
     sendRtspPacket();
 }
+
+
 
 bool TalkbackRtsp::requestSeup(char *control, char *media_type, int type, int real_type)
 {
@@ -573,8 +658,11 @@ TRY_INTERLEAVED_MODE:
         m_pRtspInfo->client_port=m_pRtspInfo->channel;
         m_pRtspInfo->server_port=m_pRtspInfo->channel;
     }else{
-        portManage_apply2_port3(&chn_port_tmp);
-        m_pRtspInfo->client_port=chn_port_tmp;
+        if(getSocketGroup(m_pRtspInfo->pSocketGroup)==false){
+            INFO_PRINT("requestSeup fail as getSocketGroup fail");
+            return false;
+        }
+        m_pRtspInfo->client_port=m_pRtspInfo->pSocketGroup->rtp_port;
     }
     rtsp_setup_transport(temp2);
     if(m_pRtspInfo->session_id[0]==0){
@@ -641,7 +729,7 @@ TRY_INTERLEAVED_MODE:
             rtp_chn_port=m_pRtspInfo->server_port+1;
             rtcp_chn_port=m_pRtspInfo->server_port;
         }
-        rtp_sock=SOCK_udp_init(NULL,m_pRtspInfo->client_port,RTSP_SOCK_TIMEOUT);
+        rtp_sock=m_pRtspInfo->pSocketGroup->rtp_socket;
         if(-1==rtp_sock){
             VLOG(VLOG_ERROR,"setup request fail as SOCK_udp_init fail:(port:%d)",m_pRtspInfo->client_port);
             return false;
@@ -649,7 +737,7 @@ TRY_INTERLEAVED_MODE:
     }
     (*pTalkbackRtp)->init(rtp_sock,rtp_chn_port,m_pRtspInfo->client_port,m_pRtspInfo->low_transport,real_type);
 #ifdef TALKBACK_RTCP_ENABLE
-    (*pTalkbackRtcp)->init(rtcp_chn_port,m_pRtspInfo->client_port+1,m_pRtspInfo->low_transport,m_pRtspInfo->role,m_pRtspInfo->cast_type,m_pRtspInfo->b_interleavedMode,m_pRtspInfo->rtspSocket,*pTalkbackRtp);
+    (*pTalkbackRtcp)->init(rtcp_chn_port,m_pRtspInfo->pSocketGroup->rtcp_port,m_pRtspInfo->low_transport,m_pRtspInfo->role,m_pRtspInfo->cast_type,m_pRtspInfo->b_interleavedMode,m_pRtspInfo->rtspSocket,m_pRtspInfo->pSocketGroup->rtcp_socket,*pTalkbackRtp);
 #endif
 
     return true;
@@ -1049,15 +1137,7 @@ uint32_t TalkbackRtsp::hash_string(char *str)
     return hval;
 }
 
-int TalkbackRtsp::portManage_apply2_port3(unsigned int * const port)
-{
 
-}
-
-int TalkbackRtsp::portManage_apply1_port3(unsigned int * const port)
-{
-
-}
 
 bool TalkbackRtsp::getSocketGroup(RTSP_SOCKET_GROUP *rsg)
 {
@@ -1097,7 +1177,7 @@ bool TalkbackRtsp::getSocketGroup(RTSP_SOCKET_GROUP *rsg)
 int TalkbackRtsp::getAvailablePort(unsigned short &port)
 {
 //lock;
-    return SOCK_udp_init_2(NULL,port,RTSP_SOCK_TIMEOUT);
+    return SOCK_udp_init_2(NULL,&port,RTSP_SOCK_TIMEOUT);
 }
 
 int TalkbackRtsp::createSocket(int port)

@@ -24,8 +24,7 @@ SOURCES += talkback.cpp \
     ../common/_base64.c \
     ../common/authentication.c \
     ../common/_md5.c \
-    talkbackrtcp.cpp \
-    avt_rtspsocket.cpp
+    talkbackrtcp.cpp
 
 HEADERS += talkback.h\
         talkback_global.h \
@@ -45,8 +44,7 @@ HEADERS += talkback.h\
     ../common/_md5.h \
     talkbackRtpDef.h \
     talkbackRtcpDef.h \
-    talkbackrtcp.h \
-    avt_rtspsocket.h
+    talkbackrtcp.h
 
 unix {
     target.path = /usr/lib
