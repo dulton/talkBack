@@ -55,7 +55,20 @@ AudioCode::AudioCode()
 
 AudioCode::~AudioCode()
 {
+    deinitAudio();
     releaseCapture();
+    m_pApplyAudioNodeListLock->lock();
+    while(1){
+        AudioCodeSpace::tagApplyAudioNode *pHead=m_pApplyAudioNodeList;
+        if(pHead==NULL){
+            break;
+        }
+        releaseAudioEx(pHead->parm);
+    }
+    m_pApplyAudioNodeListLock->unlock();
+    delete m_pApplyAudioNodeListLock;
+    m_pApplyAudioNodeListLock=NULL;
+    INFO_PRINT("AudioCode::~startCodeThread end");
 }
 
 bool AudioCode::checkClientIsSupportTalkback()
@@ -112,11 +125,12 @@ bool AudioCode::getData(void *parm, char *pBuff, int pBufferSize, int &nSize,tal
             if(pTemp->tDataNodeList[nPlace].nSize!=0&&pTemp->tDataNodeList[nPlace].nSize<=pBufferSize){
                 memcpy(pBuff,pTemp->tDataNodeList[nPlace].pData,pTemp->tDataNodeList[nPlace].nSize);
                 nTimeStamp=pTemp->tDataNodeList[nPlace].tTimeStamp;
-                pTemp->tDataNodeList[nPlace].tTimeStamp=0;
+
                 nSize=pTemp->tDataNodeList[nPlace].nSize;
-                if(nSize==0&&nTimeStamp!=0){
-                    INFO_PRINT("stop");
+                if(nSize!=0&&nTimeStamp==0){
+                   printf("nPlace:%d;size:%d;ntimeStamp:%lld\n",nPlace,nSize,nTimeStamp);
                 }
+                pTemp->tDataNodeList[nPlace].tTimeStamp=0;
                 pTemp->tDataNodeList[nPlace].nSize=0;
             }
             break;
@@ -128,6 +142,7 @@ bool AudioCode::getData(void *parm, char *pBuff, int pBufferSize, int &nSize,tal
     if(nSize==0){
         return false;
     }else{
+
         return true;
     }
 }
@@ -150,7 +165,6 @@ bool AudioCode::applyAudio(void *parm, tagAudioCodeMode tCodeMode, AudioErrorCal
     pTemp->parm=parm;
     pTemp->pErrorCallback=pErrorCallback;
     pTemp->tCodeMode=tCodeMode;
-    pTemp->pLock=new TalkbackLock;
     pTemp->pNext=NULL;
     pTemp->nMaxTimeStamp=0;
     for(int n=0;n<AUDIODATALISTSIZE;n++){
@@ -184,39 +198,7 @@ bool AudioCode::applyAudio(void *parm, tagAudioCodeMode tCodeMode, AudioErrorCal
 bool AudioCode::releaseAudio(void *parm)
 {
     m_pApplyAudioNodeListLock->lock();
-    AudioCodeSpace::tagApplyAudioNode *pHead=m_pApplyAudioNodeList;
-    AudioCodeSpace::tagApplyAudioNode *pTemp=m_pApplyAudioNodeList;
-    while(pTemp!=NULL){
-        if(pTemp->parm==parm){
-            //查找到目标
-            if(pTemp->tCodeMode==AUDIO_CODE_G711_A){
-                m_nNeedEncodeCountG711_Alaw--;
-                if(m_nNeedEncodeCountG711_Alaw==0){
-                    m_bNeedEncodeG711_Alaw=false;
-                }
-            }else if(pTemp->tCodeMode==AUDIO_CODE_C711_U){
-                m_nNeedEncodeCountG711_Ulaw--;
-                if(m_nNeedEncodeCountG711_Ulaw==0){
-                    m_bNeedEncodeG711_Ulaw=false;
-                }
-            }
-            delete pTemp->pLock;
-            for(int n=0;n<AUDIODATALISTSIZE;n++){
-                delete pTemp->tDataNodeList[n].pData;
-            }
-            if(pHead==m_pApplyAudioNodeList){
-                m_pApplyAudioNodeList=m_pApplyAudioNodeList->pNext;
-                delete pHead;
-            }else{
-                pHead->pNext=pTemp->pNext;
-                delete pTemp;
-            }
-            break;
-        }else{
-            pHead=pTemp;
-            pTemp=pTemp->pNext;
-        }
-    }
+    releaseAudioEx(parm);
     m_pApplyAudioNodeListLock->unlock();
     return true;
 }
@@ -290,11 +272,10 @@ static bool checkIsReadyForEncode(tagCapureContexInfo *pG711_Alaw,tagCapureConte
 }
 static bool AlawEncode(tagCapureContexInfo *pG711_Alaw,talkback_int64 &nCurrentTime, char *pBuff ){
     pG711_Alaw->pDataLock->lock();
-    pG711_Alaw->tDataList;
     talkback_int64 nMix=pG711_Alaw->nCurrentTimeStamp;
     int nPlace=0;
     for(int n=0;n<AUDIODATALISTSIZE;n++){
-        if(pG711_Alaw->tDataList[n].nTimeStamp>nCurrentTime&&pG711_Alaw->tDataList[n].nTimeStamp<nMix){
+        if(pG711_Alaw->tDataList[n].nTimeStamp>nCurrentTime&&pG711_Alaw->tDataList[n].nTimeStamp<=nMix){
             nMix=pG711_Alaw->tDataList[n].nTimeStamp;
             nPlace=n;
         }
@@ -433,18 +414,27 @@ TALKBACK_THREAD_RET_TYPE AudioCode::startCodeThread(void *arg){
             break;
         case tagAudioCodeStep_deinit:{
             //退出
+            g_pCapture->removeCaptureErrorCallbackFunc((void*)this);
             bStop=true;
             g_pCapture->removeCodeFromCapture(pG711_Alaw);
             g_pCapture->removeCodeFromCapture(pG711_Ulaw);
             for(int i=0;i<AUDIODATALISTSIZE;i++){
                 delete pG711_Alaw->tDataList[i].pCaptureData;
+                pG711_Alaw->tDataList[i].pCaptureData=NULL;
                 delete pG711_Ulaw->tDataList[i].pCaptureData;
+                pG711_Ulaw->tDataList[i].pCaptureData=NULL;
             }
-            g_pCapture->removeCaptureErrorCallbackFunc((void*)this);
+            delete pG711_Alaw->pDataLock;
+            delete pG711_Alaw;
+            pG711_Alaw=NULL;
+            delete pG711_Ulaw->pDataLock;
+            delete pG711_Ulaw;
+            pG711_Ulaw=NULL;
         }
             break;
         }
     }
+    INFO_PRINT("AudioCode::startCodeThread end");
 }
 
 void AudioCode::errorCallBack(tagTalkbackAudioError tError, char *pErrorInfo)
@@ -464,7 +454,6 @@ void AudioCode::disPatchBuff(char *pBuff, tagAudioCodeMode tCodeMode,talkback_in
     while(pTemp!=NULL){
         if(pTemp->tCodeMode==tCodeMode){
             pTemp->nMaxTimeStamp=nTimeStamp;
-            pTemp->pLock->lock();
             talkback_int64 nMix=nTimeStamp;
             int nPlace=0;
             for(int i=0;i<AUDIODATALISTSIZE;i++){
@@ -479,15 +468,52 @@ void AudioCode::disPatchBuff(char *pBuff, tagAudioCodeMode tCodeMode,talkback_in
 
                 }
             }
+
             pTemp->tDataNodeList[nPlace].tTimeStamp=nTimeStamp;
             pTemp->tDataNodeList[nPlace].nSize=AudioCode::getSpecAudioCodeModeFrameBuffSize(tCodeMode);
             memcpy(pTemp->tDataNodeList[nPlace].pData,pBuff,pTemp->tDataNodeList[nPlace].nSize);
-            pTemp->pLock->unlock();
         }else{
         }
         pTemp=pTemp->pNext;
     }
     m_pApplyAudioNodeListLock->unlock();
+}
+
+bool AudioCode::releaseAudioEx(void *parm)
+{
+    AudioCodeSpace::tagApplyAudioNode *pHead=m_pApplyAudioNodeList;
+    AudioCodeSpace::tagApplyAudioNode *pTemp=m_pApplyAudioNodeList;
+    while(pTemp!=NULL){
+        if(pTemp->parm==parm){
+            //查找到目标
+            if(pTemp->tCodeMode==AUDIO_CODE_G711_A){
+                m_nNeedEncodeCountG711_Alaw--;
+                if(m_nNeedEncodeCountG711_Alaw==0){
+                    m_bNeedEncodeG711_Alaw=false;
+                }
+            }else if(pTemp->tCodeMode==AUDIO_CODE_C711_U){
+                m_nNeedEncodeCountG711_Ulaw--;
+                if(m_nNeedEncodeCountG711_Ulaw==0){
+                    m_bNeedEncodeG711_Ulaw=false;
+                }
+            }
+            for(int n=0;n<AUDIODATALISTSIZE;n++){
+                delete pTemp->tDataNodeList[n].pData;
+            }
+            if(pHead==m_pApplyAudioNodeList){
+                m_pApplyAudioNodeList=m_pApplyAudioNodeList->pNext;
+                delete pHead;
+            }else{
+                pHead->pNext=pTemp->pNext;
+                delete pTemp;
+            }
+            break;
+        }else{
+            pHead=pTemp;
+            pTemp=pTemp->pNext;
+        }
+    }
+    return true;
 }
 
 

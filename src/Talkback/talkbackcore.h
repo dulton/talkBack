@@ -30,7 +30,7 @@ private:
 
     bool isTimeToSendRtspKeepAlive();
     bool isTimeToSendAudioBuffer();
-    bool isTimeToReadSocketData();
+    int isTimeToReadSocketData();//-1:错误,0:无数据可读,1:有数据可读
 
     void initRtspInfo();
     void deinitRtspInfo();

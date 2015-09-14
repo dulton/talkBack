@@ -12,7 +12,7 @@ class TalkbackLock
 {
 public:
     TalkbackLock();
-
+    ~TalkbackLock();
     void lock();
     void unlock();
 private:

@@ -735,7 +735,7 @@ TRY_INTERLEAVED_MODE:
             return false;
         }
     }
-    (*pTalkbackRtp)->init(rtp_sock,rtp_chn_port,m_pRtspInfo->client_port,m_pRtspInfo->low_transport,real_type);
+    (*pTalkbackRtp)->init(rtp_sock,rtp_chn_port,m_pRtspInfo->client_port,m_pRtspInfo->low_transport,real_type,m_pRtspInfo->ip);
 #ifdef TALKBACK_RTCP_ENABLE
     (*pTalkbackRtcp)->init(rtcp_chn_port,m_pRtspInfo->pSocketGroup->rtcp_port,m_pRtspInfo->low_transport,m_pRtspInfo->role,m_pRtspInfo->cast_type,m_pRtspInfo->b_interleavedMode,m_pRtspInfo->rtspSocket,m_pRtspInfo->pSocketGroup->rtcp_socket,*pTalkbackRtp);
 #endif

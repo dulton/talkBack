@@ -52,6 +52,7 @@ typedef struct __tagTalkbackRtspInfo{
     int client_port;//rtp 端口
     int server_port;//对方端口
     int channel;
+    talkback_int64 startPlayTime;
     uint32_t ssrc;
     int work_mode;//record or play
 
@@ -65,6 +66,7 @@ typedef struct __tagTalkbackRtspInfo{
     TalkbackRtp *pRtp_video;
     TalkbackRtp *pRtp_audio;
     RTSP_SOCKET_GROUP *pSocketGroup;
+    fd_set  read_set;
 }tagTalkbackRtspInfo;
 class TalkbackRtsp
 {

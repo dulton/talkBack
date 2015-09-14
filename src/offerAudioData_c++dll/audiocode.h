@@ -21,7 +21,6 @@ typedef struct __tagApplyAudioNode{
     tagAudioCodeMode tCodeMode;
     tagAudioDataNode tDataNodeList[AUDIODATALISTSIZE];
     talkback_int64 nMaxTimeStamp;
-    TalkbackLock *pLock;
     __tagApplyAudioNode *pNext;
 }tagApplyAudioNode;
 }
@@ -38,7 +37,6 @@ public:
     bool getData(void *parm,char *pBuff,int pBufferSize,int &nSize,talkback_int64 &nTimeStamp);
     bool applyAudio(void *parm,tagAudioCodeMode tCodeMode,AudioErrorCallback pErrorCallback);
     bool releaseAudio(void *parm);
-
     void initAudio();
     void deinitAudio();
 
@@ -46,6 +44,7 @@ public:
     void errorCallBack(tagTalkbackAudioError tError,char *pErrorInfo);
 private:
     void disPatchBuff(char *pBuff,tagAudioCodeMode tCodeMode,talkback_int64 nTimeStamp);
+    bool releaseAudioEx(void *parm);
 private :
     static bool m_bIsSupportG711_Alaw;
     static bool m_bIsSupportG711_Ulaw;

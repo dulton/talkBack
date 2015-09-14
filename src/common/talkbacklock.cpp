@@ -10,6 +10,15 @@ TalkbackLock::TalkbackLock()
 
 }
 
+TalkbackLock::~TalkbackLock()
+{
+#ifdef WIN32
+    DeleteCriticalSection(&m_csLock);
+#else
+
+#endif
+}
+
 void TalkbackLock::lock()
 {
 #ifdef WIN32

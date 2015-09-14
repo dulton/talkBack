@@ -4,7 +4,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#define RTP_MAX_FRAGMENTATION	(800) /*we must configure this manually*/
+#define RTP_MTU_SIZE 			(1258)
+#define RTP_PACKET_SIZE			(RTP_MTU_SIZE + 18 + 4)//max header size: 4(rtsp_interleaved_header)+
+            //12(rtp_header)+1(FU_indicator)+1(FU_header) + paddingsize(1~3)(4bytes align)
 typedef enum{
     RTP_TYPE_PCMU = 0,
     RTP_TYPE_RESERVED1,
@@ -37,6 +40,15 @@ typedef enum{
     RTP_TYPE_DYNAMIC = 96,//~127
 }RtpType_t;
 
+#define RTP_TYPE_PS		(128)
+#define RTP_TYPE_TS		(129)
+#define RTP_TYPE_MPEG	(130)
+#define RTP_TYPE_H264  	(131)
+#define RTP_TYPE_H265	(132)
+#define RTP_TYPE_AAC	(150)
+
+
+#define RTP_VERSION				(2)
 #define RTP_TRANSPORT_UDP	(0)
 #define RTP_TRANSPORT_TCP	(1)
 

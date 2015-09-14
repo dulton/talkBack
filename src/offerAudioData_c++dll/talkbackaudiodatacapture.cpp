@@ -23,7 +23,7 @@ TalkbackAudioDataCapture::TalkbackAudioDataCapture()
 
 TalkbackAudioDataCapture::~TalkbackAudioDataCapture()
 {
-
+    deinitCapture();
 }
 
 bool TalkbackAudioDataCapture::checkClientIsSupportTalkbackEx()
@@ -339,6 +339,10 @@ TALKBACK_THREAD_RET_TYPE TalkbackAudioDataCapture::startCodeThread(void *arg){
                 }
                 INFO_PRINT("start alcCaptureCloseDevice AudioDataCaptureStep_deinit");
                 alcCaptureCloseDevice(tAudioDevice);
+            }
+            if(NULL!=pBuff){
+                delete pBuff;
+                pBuff=NULL;
             }
             //移除code 队列
             //调用回调，告知外界

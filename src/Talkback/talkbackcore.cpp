@@ -1,6 +1,7 @@
 #include "talkbackcore.h"
 #include "TalkBackCommonTool.h"
 #include "AudioData.h"
+#include "vlog.h"
 TalkbackCore::TalkbackCore():
     m_pRtsp(NULL),
     m_pRtspInfo(NULL),
@@ -128,6 +129,7 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                 if(talkbackCoreThreadStep_play_rtsp()){
                     tStep=TalkbackCoreThreadStep_init_rtp;
                     bIsRtspPlay=true;
+                    m_pRtspInfo->startPlayTime=TalkbackThread::currentTime();
                     INFO_PRINT("TalkbackCoreThreadStep_play_rtsp success");
                 }else{
                     tStep=TalkbackCoreThreadStep_deinit;
@@ -193,8 +195,14 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                     }
                     if(bListFlags_readData==true){
                         bListFlags_readData=false;
-                        if(isTimeToReadSocketData()){
+                        int nRet=isTimeToReadSocketData();
+                        if(nRet==1){
                             tStep=TalkbackCoreThreadStep_read_data;
+                            goto DEFAULT_CONTROL;
+                        }else if(nRet==0){
+                            //do nothing
+                        }else{
+                            tStep=TalkbackCoreThreadStep_deinit;
                             goto DEFAULT_CONTROL;
                         }
                     }
@@ -275,9 +283,6 @@ bool TalkbackCore::talkbackCoreThreadStep_init_audioData()
                                   SDP_ATTR_RTP_MAP,(void*)&attr,n)==RTSP_RET_FAIL){
                 continue;
             }
-            attr.rtpmap.codec_type;
-            attr.rtpmap.freq;
-            attr.rtpmap.payload_type;
             if(strcmp(attr.rtpmap.codec_type,"PCMA")==0){
                 m_pRtspInfo->tAudioCodeMode=AUDIO_CODE_G711_A;
             }else if(strcmp(attr.rtpmap.codec_type,"PCMU")==0){
@@ -346,6 +351,27 @@ bool TalkbackCore::talkbackCoreThreadStep_sendbuf_rtp()
                     return true;
                 }
                 //send
+                if(m_pRtspInfo->startPlayTime>nTimeStamp){
+                    //do nothing
+                    continue;
+                }
+                unsigned int nInterval=nTimeStamp-m_pRtspInfo->startPlayTime;//时间间隔
+                //频率 m_pRtspInfo->rtpMap.freq
+                int freq=m_pRtspInfo->rtpMap.freq;//采样频率
+                m_pRtspInfo->rtptime;//rtp 开始时间
+                uint32_t ts=m_pRtspInfo->rtptime+freq*nInterval/1000;
+                if(NULL!=m_pRtspInfo->pRtp_audio){
+                    if(m_pRtspInfo->pRtp_audio->sendbuf(pBuffer,nSize,ts)){
+                        //keep going
+                    }else{
+                        INFO_PRINT("talkbackCoreThreadStep_sendbuf_rtp fail as sendbuf fail");
+                        VLOG(VLOG_ERROR,"send buffer fail,bufferSize:%d",nSize);
+                        return false;
+                    }
+                }else{
+                    INFO_PRINT("talkbackCoreThreadStep_sendbuf_rtp fail as m_pRtspInfo->pRtp_audio is null");
+                    return false;
+                }
             }
         }else{
             bRet=false;
@@ -356,7 +382,29 @@ bool TalkbackCore::talkbackCoreThreadStep_sendbuf_rtp()
 
 bool TalkbackCore::talkbackCoreThreadStep_read_data()
 {
-
+    int nRet;
+    if(m_pRtspInfo->b_interleavedMode==true){
+        //fix me
+        //暂时不实现这种模式
+    }else{
+        if(FD_ISSET(m_pRtspInfo->rtspSocket,&m_pRtspInfo->read_set)){
+            //处理rtsp socket 信息
+        }
+        if(m_pRtspInfo->pRtcp_audio!=NULL){
+            //处理rtcp audio 信息
+        }
+        if(m_pRtspInfo->pRtcp_video!=NULL){
+            //处理 rtcp video 信息
+            //暂时不做处理
+        }
+        if(m_pRtspInfo->pRtp_audio!=NULL){
+            //处理 rtp audio 信息
+        }
+        if(m_pRtspInfo->pRtp_video!=NULL){
+            //处理 rtp video 信息
+            // 暂不做处理
+        }
+    }
 }
 
 void TalkbackCore::talkbackCoreThreadStep_teardown_rtsp()
@@ -385,7 +433,7 @@ bool TalkbackCore::isTimeToSendAudioBuffer()
 {
     if(m_bStartTalkback==true){
         uint64_t currentTime=TalkbackThread::currentTime();//单位毫秒
-        if(currentTime-m_pRtspInfo->audioDataCheckTime>20){
+        if(currentTime-m_pRtspInfo->audioDataCheckTime>10){
             m_pRtspInfo->audioDataCheckTime=currentTime;
             return true;
         }
@@ -395,9 +443,65 @@ bool TalkbackCore::isTimeToSendAudioBuffer()
     return false;
 }
 
-bool TalkbackCore::isTimeToReadSocketData()
+int TalkbackCore::isTimeToReadSocketData()
 {
-    return false;
+    //暂时不实现 接受数据
+    return 0;
+    struct timeval timeout;
+    FD_ZERO(m_pRtspInfo->read_set);
+    int nMax_sock=0;
+    if(m_pRtspInfo->pRtcp_audio!=NULL){
+
+    }
+    if(m_pRtspInfo->pRtcp_video!=NULL){
+        //fix me
+        //暂时不实现
+    }
+    if(m_pRtspInfo->pRtp_audio!=NULL){
+        tagTalkbackRtpInfo *rtpAudioInfo=m_pRtspInfo->pRtp_audio->getRtpInfo();
+        if(rtpAudioInfo->rtp_sock!=-1){
+            FD_SET(rtpAudioInfo->rtp_sock,&m_pRtspInfo->read_set);
+            if(rtpAudioInfo->rtp_sock>nMax_sock){
+                nMax_sock=rtpAudioInfo->rtp_sock;
+            }else{
+                //do nothing
+            }
+        }else{
+            //do nothing
+        }
+    }
+    if(m_pRtspInfo->pRtp_video!=NULL){
+        //fix me
+        //暂时不实现
+    }
+    timeout.tv_sec=0;
+    timeout.tv_usec=10*1000;//10 ms
+    int nRet=select(nMax_sock+1,&m_pRtspInfo->read_set,NULL,NULL,&timeout);
+    if(nRet<0){
+        VLOG(VLOG_ERROR,"select failed");
+        //应该停止服务
+        return -1;
+    }else if(nRet==0){
+        int connect_status;
+        SOCKLEN_t connect_len;
+        connect_len=sizeof(connect_status);
+        if(getsockopt(m_pRtspInfo->rtspSocket,SOL_SOCKET,SO_ERROR,(char *)&connect_status,&connect_len)<0){
+            VLOG(VLOG_ERROR,"rtspc:socket disconnect ,errno:%d",errno);
+            //应该停止服务
+            return -1;
+        }else{
+            if(connect_status!=0){
+                VLOG(VLOG_ERROR,"rtspc:socket disconnect ,errno:%d",errno);
+                //应该停止服务
+                return -1;
+            }
+            //time out
+        }
+        return 0;
+    }else{
+        return 1;
+    }
+    return 0;
 }
 
 void TalkbackCore::initRtspInfo()

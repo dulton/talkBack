@@ -36,13 +36,18 @@ public:
     ~TalkbackAudioDataCapture();
     static bool checkClientIsSupportTalkbackEx();
     bool checkClientIsSupportTalkback();
+
     void initCapture();
     void deinitCapture();
+
     void addCodeToCapture(tagCapureContexInfo *pContexInfo);
     void removeCodeFromCapture(tagCapureContexInfo *pContexInfo);
+
     void setCaptureErrorCallbackFunc(void *parm, AudioDataCaptureErrorCallback Func);
     void removeCaptureErrorCallbackFunc(void *parm);
+
     static int getFrameSize();
+
     TALKBACK_THREAD_RET_TYPE startCodeThread(void *arg);
 private:
     bool reCheckClientIsSupportTalkback();
