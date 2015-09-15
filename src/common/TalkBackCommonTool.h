@@ -43,7 +43,7 @@
 
         fprintf(stdout,"\033[31m"); \
 
-        fprintf(stdout,"[file: %s line: %d] %s\n", __FILE__, __LINE__, str); \
+        fprintf(stdout,"[file: %s func:%s line: %d] %s\n", __FILE__, __FUNCTION__,__LINE__, str); \
 
         fprintf(stdout,"\033[0m"); \
 
@@ -53,7 +53,7 @@
 
 #define ERR_PRINT(str)
 
-#define INFO_PRINT(str) fprintf(stdout,"[file: %s line: %d] %s\n", __FILE__, __LINE__, str);
+#define INFO_PRINT(str) fprintf(stdout,"[file: %s func:%s line: %d] %s\n", __FILE__,__FUNCTION__, __LINE__, str);
 
 #endif
 

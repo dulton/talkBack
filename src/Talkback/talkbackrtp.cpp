@@ -13,7 +13,11 @@ TalkbackRtp::TalkbackRtp():m_pRtpInfo(NULL),
 
 TalkbackRtp::~TalkbackRtp()
 {
-
+    if(m_pRtpInfo!=NULL){
+        delete m_pRtpInfo;
+        m_pRtpInfo=NULL;
+    }
+    deinitRtpHeader();
 }
 
 bool TalkbackRtp::init(SOCK_t rtp_sock, int rtp_server_port, int rtp_client_port,
@@ -73,6 +77,7 @@ bool TalkbackRtp::sendbuf(char *src,uint32_t len,uint32_t ts)
 void TalkbackRtp::deinit()
 {
     //fix me
+    deinitRtpHeader();
 }
 
 tagTalkbackRtpInfo *TalkbackRtp::getRtpInfo()
@@ -97,6 +102,7 @@ bool TalkbackRtp::initRtpHeader()
     pRtspInterHeader_t=&m_pRtp->interHeader;
 
     memset(m_pRtp->peername,0,sizeof(m_pRtp->peername));
+    m_pRtp->role=RTP_SERVER;
     m_pRtp->timestamp=0xffffffff;
     m_pRtp->seq=0;
     m_pRtp->raw_data=false;
@@ -136,7 +142,19 @@ bool TalkbackRtp::initRtpHeader()
 
 void TalkbackRtp::deinitRtpHeader()
 {
-
+    if(m_pRtp==NULL){
+        return;
+    }
+    if(NULL!=m_pRtp->packet.buffer){
+        if(m_pRtp->role==RTP_SERVER){
+            free(m_pRtp->packet.buffer);
+        }else{
+            //fix me
+        }
+            m_pRtp->packet.buffer=NULL;
+    }
+    free(m_pRtp);
+    m_pRtp=NULL;
 }
 
 bool TalkbackRtp::rtp_packet_g711_A(char *src, uint32_t len, uint32_t ts)

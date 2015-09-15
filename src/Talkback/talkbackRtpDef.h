@@ -60,6 +60,9 @@ typedef enum{
 #define RTP_UNICAST		(0)
 #define	RTP_MULTICAST		(1)
 #define RTP_MAX_FRAGMENTATION	(800) /*we must configure this manually*/
+
+#define RTP_CLIENT 0
+#define RTP_SERVER 1
 typedef struct _rtp_header
 {
 // 0                   1                   2                   3

@@ -7,6 +7,11 @@
 #include <QDateTime>
 
 tagAudioContext *g_pContext=NULL;
+
+void mainWindowErrorCallback(void *parm,tagTalkbackCInterfaceError tError,char *pErrorInfo){
+    printf("mainWindowErrorCallback:%d;pErrorInfo:%s\n",tError,pErrorInfo);
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -19,12 +24,12 @@ MainWindow::MainWindow(QWidget *parent) :
     m_pTalkbackContext=new tagTalkbackContext;
     m_pTalkbackContext->pUserContext=this;
     m_pTalkbackContext->pTalkbackContext=NULL;
-    sprintf(m_pTalkbackContext->ip,"192.168.100.75");
+    sprintf(m_pTalkbackContext->ip,"192.168.60.180");
     sprintf(m_pTalkbackContext->passWord,"12345");
     sprintf(m_pTalkbackContext->userName,"admin");
-    sprintf(m_pTalkbackContext->url,"rtsp://192.168.100.75:554/Streaming/Channels/1?transportmode=unicast&profile=Profile_1");
+    sprintf(m_pTalkbackContext->url,"rtsp://192.168.60.180:554/Streaming/Channels/1?transportmode=unicast&profile=Profile_1");
     m_pTalkbackContext->nPort=554;
-    m_pTalkbackContext->errorEventHook=NULL;
+    m_pTalkbackContext->errorEventHook=mainWindowErrorCallback;
 
 }
 
@@ -103,9 +108,7 @@ void MainWindow::on_checkClientIsSupportTalkback_clicked()
 
 void MainWindow::on_pauseTalkback_clicked()
 {
-    char stream[]="rtsp://192.168.100.75:554/Streaming/Channels/1?transportmode=unicast&profile=Profile_1";
-    char sGetStream[128];
-    sscanf(stream,"rtsp://%*[^/]/%s",sGetStream);
+    pauseTalkback(m_pTalkbackContext);
     return;
 }
 

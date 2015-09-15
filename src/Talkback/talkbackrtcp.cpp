@@ -1,12 +1,20 @@
 #include "talkbackrtcp.h"
 
 #include "vlog.h"
-TalkbackRtcp::TalkbackRtcp()
+TalkbackRtcp::TalkbackRtcp():m_pRtcpInfo(NULL)
 {
     m_pRtcpInfo=new tagTalkbackRtcpInfo;
     m_pRtcpInfo->pRtp=NULL;
     m_pRtcpInfo->rtcp_sock=-1;
     m_pRtcpInfo->rtspSocket=-1;
+}
+
+TalkbackRtcp::~TalkbackRtcp()
+{
+    if(NULL!=m_pRtcpInfo){
+        delete m_pRtcpInfo;
+        m_pRtcpInfo=NULL;
+    }
 }
 
 bool TalkbackRtcp::init(int rtcp_server_port, int rtcp_client_port, int low_transport, int role, int cast_type, int b_interleavedMode, SOCK_t rtspSocket, SOCK_t rtcpSocket,TalkbackRtp *pRtp)

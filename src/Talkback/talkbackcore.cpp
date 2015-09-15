@@ -2,6 +2,7 @@
 #include "TalkBackCommonTool.h"
 #include "AudioData.h"
 #include "vlog.h"
+
 TalkbackCore::TalkbackCore():
     m_pRtsp(NULL),
     m_pRtspInfo(NULL),
@@ -10,6 +11,11 @@ TalkbackCore::TalkbackCore():
     m_tThreadId(0),
     m_bThreadStop(true),
     m_bStartTalkback(false)
+{
+
+}
+
+TalkbackCore::~TalkbackCore()
 {
 
 }
@@ -83,6 +89,7 @@ typedef enum __tagTalkbackCoreThreadStep{
     TalkbackCoreThreadStep_read_data,
     TalkbackCoreThreadStep_teardown_rtsp,
     TalkbackCoreThreadStep_keepalive_rtsp,
+    TalkbackCoreThreadStep_audio_eventcallback,
     TalkbackCoreThreadStep_default,
     TalkbackCoreThreadStep_deinit,
 }tagTalkbackCoreThreadStep;
@@ -106,7 +113,12 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
             }
             break;
         case TalkbackCoreThreadStep_setup_rtsp:{
-                if(talkbackCoreThreadStep_setup_rtsp()){
+                int nflag;
+                //0:对方设备不在线
+                //1:对方设备不支持语音回传功能
+                //2:成功
+                //3:失败
+                if(talkbackCoreThreadStep_setup_rtsp(nflag)){
                     tStep=TalkbackCoreThreadStep_init_audioData;
                     m_pRtspInfo->session_lastTime=TalkbackThread::currentTime()/1000;
                     m_pRtspInfo->audioDataCheckTime=TalkbackThread::currentTime();
@@ -115,20 +127,34 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                     tStep=TalkbackCoreThreadStep_deinit;
                     INFO_PRINT("TalkbackCoreThreadStep_setup_rtsp fail");
                 }
+                if(nflag==0){
+                    this->eventCallback(tagTalkbackCInterface_device_outOfLine,"tagTalkbackCInterface_device_outOfLine");
+                }else if(nflag==1){
+                    this->eventCallback(tagTalkbackCInterface_device_unsupport,"tagTalkbackCInterface_device_unsupport");
+                }else{
+                    //do nothing
+                }
             }
             break;
         case TalkbackCoreThreadStep_init_audioData:{
-            if(talkbackCoreThreadStep_init_audioData()){
+            int nFlags=0;
+            if(talkbackCoreThreadStep_init_audioData(nFlags)){
                 tStep=TalkbackCoreThreadStep_play_rtsp;
             }else{
                 tStep=TalkbackCoreThreadStep_deinit;
                 INFO_PRINT("talkbackCoreThreadStep_init_audioData fail");
+            }
+            if(nFlags==1){
+                this->eventCallback(tagTalkbackCInterface_codeMode_unsupport,"tagTalkbackCInterface_codeMode_unsupport");
+            }else{
+                //do nothing
             }
         }
         case TalkbackCoreThreadStep_play_rtsp:{
                 if(talkbackCoreThreadStep_play_rtsp()){
                     tStep=TalkbackCoreThreadStep_init_rtp;
                     bIsRtspPlay=true;
+                    this->eventCallback(tagTalkbackCInterface_talkback_start,"tagTalkbackCInterface_talkback_start");
                     m_pRtspInfo->startPlayTime=TalkbackThread::currentTime();
                     INFO_PRINT("TalkbackCoreThreadStep_play_rtsp success");
                 }else{
@@ -152,6 +178,7 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                     tStep=TalkbackCoreThreadStep_default;
                 }else{
                     tStep=TalkbackCoreThreadStep_deinit;
+                    this->eventCallback(tagTalkbackCInterface_device_disconnect,"tagTalkbackCInterface_device_disconnect");
                 }
             }
             break;
@@ -173,8 +200,14 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                     tStep=TalkbackCoreThreadStep_default;
                 }else{
                     tStep=TalkbackCoreThreadStep_deinit;
+                    this->eventCallback(tagTalkbackCInterface_device_disconnect,"tagTalkbackCInterface_device_disconnect");
                 }
             }
+            break;
+        case TalkbackCoreThreadStep_audio_eventcallback:{
+            talkbackCoreThreadStep_audio_eventcallback();
+            tStep=TalkbackCoreThreadStep_deinit;
+        }
             break;
         case TalkbackCoreThreadStep_default:{
                 if(m_bThreadStop==false){
@@ -221,7 +254,9 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                     }
                 }else{
                     if(bIsRtspPlay==true){
+                        bIsRtspPlay=false;
                         tStep=TalkbackCoreThreadStep_teardown_rtsp;
+                        this->eventCallback(tagTalkbackCInterface_talkback_end,"tagTalkbackCInterface_talkback_end");
                     }else{
                         tStep=TalkbackCoreThreadStep_deinit;
                     }
@@ -229,6 +264,9 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
             }
             break;
         case TalkbackCoreThreadStep_deinit:{
+                if(bIsRtspPlay==true){
+                    this->eventCallback(tagTalkbackCInterface_talkback_end,"tagTalkbackCInterface_talkback_end");
+                }
                 talkbackCoreThreadStep_deinit_audioData();
                 talkbackCoreThreadStep_deinit_rtp();
                 talkbackCoreThreadStep_deinit();
@@ -239,6 +277,8 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
     }
     INFO_PRINT("TalkbackCore thread end");
 }
+
+
 
 bool TalkbackCore::talkbackCoreThreadStep_init()
 {
@@ -260,22 +300,72 @@ bool TalkbackCore::talkbackCoreThreadStep_init()
 
 void TalkbackCore::talkbackCoreThreadStep_deinit()
 {
-
+    if(NULL!=m_pRtsp){
+        m_pRtsp->deinit();
+        delete m_pRtsp;
+        m_pRtsp=NULL;
+    }
+    if(NULL!=m_pRtspInfo){
+        deinitRtspInfo();
+    }
 }
 
-bool TalkbackCore::talkbackCoreThreadStep_setup_rtsp()
+bool TalkbackCore::talkbackCoreThreadStep_setup_rtsp(int &nFlags)
 {
-    return m_pRtsp->setup();
+    return m_pRtsp->setup(nFlags);
 }
-void errorCallback(void *parm,tagTalkbackAudioError tError,char *pErrorInfo){
+void talkbackCoreErrorCallback(void *parm,tagTalkbackAudioError tError,char *pErrorInfo){
+    INFO_PRINT("errorCallback");
+    if(parm!=NULL){
+        TalkbackCore *pTalkbackCore=(TalkbackCore*)parm;
+        pTalkbackCore->talkbackCoreErrorCallbackEx(tError,pErrorInfo);
+    }
 }
-bool TalkbackCore::talkbackCoreThreadStep_init_audioData()
+void TalkbackCore::talkbackCoreErrorCallbackEx(tagTalkbackAudioError tError,char *pErrorInfo)
+{
+    m_pEventCallbackStateLock->lock();
+    if(m_tEventCallbackState.state==true){
+        bool bRet=false;
+        if(tError==AUDIO_MICROPHONE_UNDETECT){
+            bRet=true;
+            m_tEventCallbackState.tError=tagTalkbackCInterface_microphone_undetect;
+        }else if(AUDIO_CODE_TYPE_UNSUPPORT==tError){
+            bRet=true;
+            m_tEventCallbackState.tError=tagTalkbackCInterface_codeMode_unsupport;
+        }else if(AUDIO_UNKNOW_ERROR==tError){
+            bRet=true;
+            m_tEventCallbackState.tError=tagTalkbackCInterface_unknow_error;
+        }else{
+            //do nothing
+
+        }
+        if(bRet==true){
+            m_tEventCallbackState.bExistError=true;
+            if(NULL!=m_tEventCallbackState.pMessage){
+                delete m_tEventCallbackState.pMessage;
+                m_tEventCallbackState.pMessage=NULL;
+            }
+            if(NULL!=pErrorInfo){
+                int nLen=strlen(pErrorInfo);
+                m_tEventCallbackState.pMessage=new char[nLen];
+                memcpy(m_tEventCallbackState.pMessage,pErrorInfo,nLen);
+            }
+        }
+    }else{
+        //do nothing
+    }
+    m_pEventCallbackStateLock->unlock();
+}
+bool TalkbackCore::talkbackCoreThreadStep_init_audioData(int &nFlags)
 {
     if(m_pAudioDataContext==NULL){
         m_pAudioDataContext=new tagAudioContext;
         m_pAudioDataContext->pUserContext=this;
         m_pAudioDataContext->pAudioDataContext=NULL;
     }
+#ifdef TEST_G711
+    m_pRtspInfo->file=fopen("test.g711", "wb");
+#endif
     for(int n=0;n<m_pRtspInfo->sdp->media_num;n++){
         if(m_pRtspInfo->sdp->media[n].bRtspSetUp==1){
             Attribute_t attr;
@@ -288,13 +378,20 @@ bool TalkbackCore::talkbackCoreThreadStep_init_audioData()
             }else if(strcmp(attr.rtpmap.codec_type,"PCMU")==0){
                 m_pRtspInfo->tAudioCodeMode=AUDIO_CODE_C711_U;
             }else{
+                nFlags=1;
                 INFO_PRINT("talkbackCoreThreadStep_init_audioData fail as do not support the audio type");
                 return false;
             }
             m_pRtspInfo->rtpMap.freq=attr.rtpmap.freq;
             m_pRtspInfo->rtpMap.payload_type=attr.rtpmap.payload_type;
             memcpy(m_pRtspInfo->rtpMap.codec_type,attr.rtpmap.codec_type,strlen(attr.rtpmap.codec_type));
-            bool bRet=applyAudio(m_pAudioDataContext,m_pRtspInfo->tAudioCodeMode,errorCallback);
+
+            m_tEventCallbackState.state=true;
+            m_tEventCallbackState.bExistError=false;
+            m_tEventCallbackState.pMessage=NULL;
+            m_pEventCallbackStateLock=new TalkbackLock;
+
+            bool bRet=applyAudio(m_pAudioDataContext,m_pRtspInfo->tAudioCodeMode,talkbackCoreErrorCallback);
             if(bRet==false){
                 INFO_PRINT("talkbackCoreThreadStep_init_audioData fail as applyAudio fail");
             }
@@ -303,12 +400,34 @@ bool TalkbackCore::talkbackCoreThreadStep_init_audioData()
             continue;
         }
     }
-    return true;
+    return false;
 }
 
 void TalkbackCore::talkbackCoreThreadStep_deinit_audioData()
 {
     //fix me
+    if(m_pAudioDataContext!=NULL){
+        releaseAudio(m_pAudioDataContext);
+        delete m_pAudioDataContext;
+        m_pAudioDataContext=NULL;
+
+        m_tEventCallbackState.state=false;
+        m_tEventCallbackState.bExistError=false;
+        if(NULL!=m_tEventCallbackState.pMessage){
+            delete m_tEventCallbackState.pMessage;
+            m_tEventCallbackState.pMessage=NULL;
+        }
+        if(NULL!=m_pEventCallbackStateLock){
+            delete m_pEventCallbackStateLock;
+            m_pEventCallbackStateLock=NULL;
+        }
+    }
+#ifdef TEST_G711
+    if(NULL!=m_pRtspInfo->file){
+        fclose(m_pRtspInfo->file);
+        m_pRtspInfo->file=NULL;
+    }
+#endif
 }
 
 bool TalkbackCore::talkbackCoreThreadStep_play_rtsp()
@@ -324,8 +443,9 @@ bool TalkbackCore::talkbackCoreThreadStep_init_rtp()
 void TalkbackCore::talkbackCoreThreadStep_deinit_rtp()
 {
 //fix me
+    return;
 }
-uint64_t g_nTime=0;
+static uint64_t g_nTime=0;
 bool TalkbackCore::talkbackCoreThreadStep_sendbuf_rtp()
 {
     int nSize=0;
@@ -372,6 +492,9 @@ bool TalkbackCore::talkbackCoreThreadStep_sendbuf_rtp()
                     INFO_PRINT("talkbackCoreThreadStep_sendbuf_rtp fail as m_pRtspInfo->pRtp_audio is null");
                     return false;
                 }
+#ifdef TEST_G711
+                fwrite(pBuffer,1,nSize,m_pRtspInfo->file);
+#endif
             }
         }else{
             bRet=false;
@@ -382,7 +505,7 @@ bool TalkbackCore::talkbackCoreThreadStep_sendbuf_rtp()
 
 bool TalkbackCore::talkbackCoreThreadStep_read_data()
 {
-    int nRet;
+    return true;
     if(m_pRtspInfo->b_interleavedMode==true){
         //fix me
         //暂时不实现这种模式
@@ -417,11 +540,27 @@ bool TalkbackCore::talkbackCoreThreadStep_keepalive_rtsp()
     return m_pRtsp->keepalive();
 }
 
+void TalkbackCore::talkbackCoreThreadStep_audio_eventcallback()
+{
+    m_pEventCallbackStateLock->lock();
+    this->eventCallback(m_tEventCallbackState.tError,m_tEventCallbackState.pMessage);
+    m_tEventCallbackState.bExistError=false;
+    m_pEventCallbackStateLock->unlock();
+}
+
 bool TalkbackCore::isTimeToSendRtspKeepAlive()
 {
     uint64_t session_currentTime=TalkbackThread::currentTime()/1000;//单位秒
-    //默认比timeout的时间 提早5s发送
-    if((session_currentTime+5-m_pRtspInfo->session_lastTime)>10){
+    int nTimeout;
+    if(m_pRtspInfo->session_timeout>10){
+        nTimeout=10;
+    }else if(m_pRtspInfo->session_timeout<2){
+        nTimeout=2;
+    }else{
+        nTimeout=m_pRtspInfo->session_timeout;
+    }
+    //这一段时违法协议的做法，不安装协议的超时 进行发送keep alive
+    if((session_currentTime-m_pRtspInfo->session_lastTime)>nTimeout){
         m_pRtspInfo->session_lastTime=session_currentTime;
         return true;
     }else{
@@ -448,7 +587,7 @@ int TalkbackCore::isTimeToReadSocketData()
     //暂时不实现 接受数据
     return 0;
     struct timeval timeout;
-    FD_ZERO(m_pRtspInfo->read_set);
+    FD_ZERO(&m_pRtspInfo->read_set);
     int nMax_sock=0;
     if(m_pRtspInfo->pRtcp_audio!=NULL){
 
@@ -504,6 +643,15 @@ int TalkbackCore::isTimeToReadSocketData()
     return 0;
 }
 
+bool TalkbackCore::isExistEventCallback()
+{
+    if(true==m_tEventCallbackState.state&&true==m_tEventCallbackState.bExistError){
+        return true;
+    }else{
+        return false;
+    }
+}
+
 void TalkbackCore::initRtspInfo()
 {
     m_pRtspInfo=new tagTalkbackRtspInfo;
@@ -548,13 +696,77 @@ void TalkbackCore::initRtspInfo()
     m_pRtspInfo->pSocketGroup->rtcp_socket=-1;
     m_pRtspInfo->pSocketGroup->rtp_port=0;
     m_pRtspInfo->pSocketGroup->rtp_socket=-1;
+    m_pRtspInfo->file=NULL;
 }
 
 void TalkbackCore::deinitRtspInfo()
 {
     //fix me
-    delete m_pRtspInfo;
-    m_pRtspInfo=NULL;
+    if(m_pRtspInfo!=NULL){
+        //close rtspSocket
+        //delete sdp;
+        //delete auth
+        //delete pRtcp_video
+        //delete pRtcp_audio
+        //delete pRtp_video
+        //delete pRtp_audio
+        //close pSocketGroup
+        //delete pSocketGroup
+        //delete m_pRtspInfo
+        if(m_pRtspInfo->rtspSocket!=-1){
+            SOCK_close(m_pRtspInfo->rtspSocket);
+            m_pRtspInfo->rtspSocket=-1;
+        }
+        if(m_pRtspInfo->sdp!=NULL){
+            SDP_cleanup(m_pRtspInfo->sdp);
+            m_pRtspInfo->sdp=NULL;
+        }
+        if(m_pRtspInfo->auth!=NULL){
+            HTTP_AUTH_destroy(m_pRtspInfo->auth);
+            m_pRtspInfo->auth=NULL;
+        }
+        if(m_pRtspInfo->pSocketGroup!=NULL){
+            if(m_pRtspInfo->pSocketGroup->rtcp_socket!=-1){
+                SOCK_close(m_pRtspInfo->pSocketGroup->rtcp_socket);
+                m_pRtspInfo->pSocketGroup->rtcp_socket=-1;
+            }
+            if(m_pRtspInfo->pSocketGroup->rtp_socket!=-1){
+                SOCK_close(m_pRtspInfo->pSocketGroup->rtp_socket);
+                m_pRtspInfo->pSocketGroup->rtp_socket=-1;
+            }
+            delete m_pRtspInfo->pSocketGroup;
+            m_pRtspInfo->pSocketGroup=NULL;
+        }
+        if(NULL!=m_pRtspInfo->pRtcp_audio){
+            m_pRtspInfo->pRtcp_audio->deinit();
+            delete m_pRtspInfo->pRtcp_audio;
+            m_pRtspInfo->pRtcp_audio=NULL;
+        }
+        if(NULL!=m_pRtspInfo->pRtcp_video){
+            m_pRtspInfo->pRtcp_video->deinit();
+            delete m_pRtspInfo->pRtcp_video;
+            m_pRtspInfo->pRtcp_video=NULL;
+        }
+        if(NULL!=m_pRtspInfo->pRtp_audio){
+            m_pRtspInfo->pRtp_audio->deinit();
+            delete m_pRtspInfo->pRtp_audio;
+            m_pRtspInfo->pRtp_audio=NULL;
+        }
+        if(NULL!=m_pRtspInfo->pRtp_video){
+            m_pRtspInfo->pRtp_video->deinit();
+            delete m_pRtspInfo->pRtp_video;
+            m_pRtspInfo->pRtp_video=NULL;
+        }
+        delete m_pRtspInfo;
+        m_pRtspInfo=NULL;
+    }
+}
+
+void TalkbackCore::eventCallback(tagTalkbackCInterfaceError tError, char *pError)
+{
+    if(m_pTalkbackContext!=NULL){
+        m_pTalkbackContext->errorEventHook(m_pTalkbackContext,tError,pError);
+    }
 }
 
 

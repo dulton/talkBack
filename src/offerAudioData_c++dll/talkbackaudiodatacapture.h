@@ -34,8 +34,7 @@ class TalkbackAudioDataCapture
 public:
     explicit TalkbackAudioDataCapture();
     ~TalkbackAudioDataCapture();
-    static bool checkClientIsSupportTalkbackEx();
-    bool checkClientIsSupportTalkback();
+    static bool checkClientIsSupportTalkback();
 
     void initCapture();
     void deinitCapture();

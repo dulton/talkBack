@@ -19,6 +19,7 @@ class TalkbackRtcp
 {
 public:
     TalkbackRtcp();
+    ~TalkbackRtcp();
     bool init(int rtcp_server_port,int rtcp_client_port,int low_transport,int role,int cast_type,int b_interleavedMode,SOCK_t rtspSocket,SOCK_t rtcpSocket,TalkbackRtp *pRtp);
     void deinit();
 private:

@@ -9,6 +9,8 @@
 #include "talkbackrtp.h"
 #include "talkbackrtcp.h"
 #include "TalkBackDataTypeCommon.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 typedef struct rtsp_socket_group
 {
@@ -67,13 +69,14 @@ typedef struct __tagTalkbackRtspInfo{
     TalkbackRtp *pRtp_audio;
     RTSP_SOCKET_GROUP *pSocketGroup;
     fd_set  read_set;
+    FILE *file;
 }tagTalkbackRtspInfo;
 class TalkbackRtsp
 {
 public:
     TalkbackRtsp();
     ~TalkbackRtsp();
-    bool setup();
+    bool setup(int &nFlag);
     bool play();
     bool keepalive();
     void teardown();

@@ -28,9 +28,12 @@ typedef enum __tagTalkbackCInterfaceError{
     tagTalkbackCInterface_microphone_undetect,//麦克风设备不在线
     tagTalkbackCInterface_parm_error,//输入参数错误
     tagTalkbackCInterface_device_outOfLine,//对方设备不在线
+    tagTalkbackCInterface_device_disconnect,//连接已断开
     tagTalkbackCInterface_device_unsupport,//对方设备不支持语音回传功能
     tagTalkbackCInterface_num_outOfRange,//超出语音最大连接数
     tagTalkbackCInterface_codeMode_unsupport,//不支持该编码格式
+    tagTalkbackCInterface_talkback_end,//结束
+    tagTalkbackCInterface_talkback_start,//开始
     tagTalkbackCInterface_unknow_error,//未知错误
     tagTalkbackCInterface_error_size,//
 }tagTalkbackCInterfaceError;

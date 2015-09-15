@@ -23,6 +23,13 @@ typedef struct __tagApplyAudioNode{
     talkback_int64 nMaxTimeStamp;
     __tagApplyAudioNode *pNext;
 }tagApplyAudioNode;
+typedef struct __tagApplyAudioEventCallbackState{
+    bool state;
+    bool bExistError;
+    tagTalkbackAudioError tError;
+    char *pMessage;
+}tagApplyAudioEventCallbackState;
+
 }
 
 class AudioCode
@@ -41,10 +48,15 @@ public:
     void deinitAudio();
 
     TALKBACK_THREAD_RET_TYPE startCodeThread(void *arg);
-    void errorCallBack(tagTalkbackAudioError tError,char *pErrorInfo);
+
+    void applyAudioEventCallbackState(tagTalkbackAudioError tError,char *pErrorInfo);
 private:
     void disPatchBuff(char *pBuff,tagAudioCodeMode tCodeMode,talkback_int64 nTimeStamp);
+    void errorCallBack(tagTalkbackAudioError tError,char *pErrorInfo);
     bool releaseAudioEx(void *parm);
+    void setCallbackState(bool state);
+    bool isExistCallback();
+    int audioCodeStep_eventcallback();//0:线程需要结束,1:线程接着运行
 private :
     static bool m_bIsSupportG711_Alaw;
     static bool m_bIsSupportG711_Ulaw;
@@ -55,6 +67,8 @@ private:
     TALKBACK_THREAD_HANDLE m_tCodeThreadId;
     bool m_bCodeThreadStop;
     TalkbackLock *m_pApplyAudioNodeListLock;
+    TalkbackLock *m_pApplyAudioEventCallbackStateLock;
+    AudioCodeSpace::tagApplyAudioEventCallbackState m_tApplyAudioEventCallbackState;
     AudioCodeSpace::tagApplyAudioNode *m_pApplyAudioNodeList;
     bool m_bNeedEncodeG711_Alaw;
     bool m_bNeedEncodeG711_Ulaw;

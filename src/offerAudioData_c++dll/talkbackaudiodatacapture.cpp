@@ -26,26 +26,26 @@ TalkbackAudioDataCapture::~TalkbackAudioDataCapture()
     deinitCapture();
 }
 
-bool TalkbackAudioDataCapture::checkClientIsSupportTalkbackEx()
-{
-    //阻塞很久
-    ALCdevice *device=NULL;
-    device= alcCaptureOpenDevice(NULL, SAMPLING_RATE,AL_FORMAT_MONO16, CAPTURE_BUFFER_LENGTH_MIN);
-    if(device!=NULL){
-        alcCaptureCloseDevice(device);
-        return true;
-    }else{
+static bool isDeviceStillEnable(){
+     const ALCchar* devices = alcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
+     //完成此处代码
+     char pStr1[3]={0,'\\','0'};
+     int n=strcmp(devices,pStr1);
+     if(n==0){
         return false;
-    }
+     }else{
+        return true;
+     }
 }
-
 bool TalkbackAudioDataCapture::checkClientIsSupportTalkback()
 {
+    return isDeviceStillEnable();
+    /*
     if(m_bClientIsSupportTalkback){
         return m_bClientIsSupportTalkback;
     }else{
         return reCheckClientIsSupportTalkback();
-    }
+    }*/
 }
 static TALKBACK_THREAD_RET_TYPE startCaptureThreadEx(void *arg){
     TalkbackAudioDataCapture *pContext=(TalkbackAudioDataCapture*)arg;
@@ -67,6 +67,9 @@ void TalkbackAudioDataCapture::initCapture()
 void TalkbackAudioDataCapture::deinitCapture()
 {
     //销毁线程
+    if(m_bThreadStop==true){
+        return ;
+    }
     m_bThreadStop=true;
     INFO_PRINT("deinitCapture,wait for thread end");
 #ifdef WIN32
@@ -193,17 +196,7 @@ static bool isOpenalExistError(ALCdevice *tAudioDevice,char *pString){
         return false;
     }
 }
-static bool isDeviceStillEnable(){
-     const ALCchar* devices = alcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
-     //完成此处代码
-     char pStr1[3]={0,'\\','0'};
-     int n=strcmp(devices,pStr1);
-     if(n==0){
-        return false;
-     }else{
-        return true;
-     }
-}
+
 static int audioDataCaptureStep_captureData(ALCdevice *pAudioDevice,char *pBuff)
 {
 //0:捕获完成一帧数据，1：还没有捕获到一帧数据，2：捕获设备失败
@@ -237,6 +230,7 @@ TALKBACK_THREAD_RET_TYPE TalkbackAudioDataCapture::startCodeThread(void *arg){
     ALCdevice *tAudioDevice=NULL;
     int nCount=50;
     char *pBuff=new char[2*CAPTURE_BUFFER_LENGTH_MIN];
+    INFO_PRINT("startCodeThread begin");
     while(bStop==false){
         switch(tStep){
         case AudioDataCaptureStep_init:{
@@ -293,7 +287,7 @@ TALKBACK_THREAD_RET_TYPE TalkbackAudioDataCapture::startCodeThread(void *arg){
             nCount++;
             if(nCount>50){
                 nCount=0;
-                if(!isDeviceStillEnable){
+                if(!isDeviceStillEnable()){
                     m_bClientIsSupportTalkback=false;
                     tStep=AudioDataCaptureStep_default;
                     //调用回调，告知外界
@@ -331,14 +325,15 @@ TALKBACK_THREAD_RET_TYPE TalkbackAudioDataCapture::startCodeThread(void *arg){
             break;
         case AudioDataCaptureStep_deinit:{
                 //回收资源
-            INFO_PRINT("start AudioDataCaptureStep_deinit");
             if(NULL!=tAudioDevice){
-                INFO_PRINT("start alcCaptureStop AudioDataCaptureStep_deinit");
                 if(m_bClientIsSupportTalkback==true){
+                    INFO_PRINT("alcCaptureStop begin");
                     alcCaptureStop(tAudioDevice);
+                    INFO_PRINT("alcCaptureStop end");
                 }
-                INFO_PRINT("start alcCaptureCloseDevice AudioDataCaptureStep_deinit");
+                INFO_PRINT("alcCaptureCloseDevice begin");
                 alcCaptureCloseDevice(tAudioDevice);
+                INFO_PRINT("alcCaptureCloseDevice end");
             }
             if(NULL!=pBuff){
                 delete pBuff;
@@ -346,15 +341,14 @@ TALKBACK_THREAD_RET_TYPE TalkbackAudioDataCapture::startCodeThread(void *arg){
             }
             //移除code 队列
             //调用回调，告知外界
-            INFO_PRINT("start errorCallBack AudioDataCaptureStep_deinit");
             errorCallBack(DataCapture_Thread_Unwork,"deinit func been called");
             //移除回调队列
             bStop=true;
-            INFO_PRINT("AudioDataCaptureStep_deinit,end capture audio data");
         }
             break;
         }
     }
+    INFO_PRINT("startCodeThread end");
 }
 
 bool TalkbackAudioDataCapture::reCheckClientIsSupportTalkback()

@@ -109,8 +109,13 @@ enum{
     RTSP_RSC_OPTION_NOTSUPPORTED,
     RTSP_RSC_END							////-44
 };
-bool TalkbackRtsp::setup()
+bool TalkbackRtsp::setup(int &nFlags)
 {
+    //0:对方设备不在线
+    //1:对方设备不支持语音回传功能
+    //2:成功
+    //3:失败
+    nFlags=3;
     typedef enum __tagTalkbackRtspSetup{
         tagTalkbackRtspSetup_connect,
         tagTalkbackRtspSetup_option,
@@ -120,6 +125,10 @@ bool TalkbackRtsp::setup()
         tagTalkbackRtspSetup_fail,
         tagTalkbackRtspSetup_exit,
     }tagTalkbackRtspSetup;
+    if(m_pRtspInfo==NULL){
+        nFlags=3;
+        return false;
+    }
     bool bStop=false;
     bool bFlag=false;
     tagTalkbackRtspSetup tStep=tagTalkbackRtspSetup_connect;
@@ -128,8 +137,10 @@ bool TalkbackRtsp::setup()
             case tagTalkbackRtspSetup_connect:{
                 if(talkbackRtspSetup_connect()){
                     tStep=tagTalkbackRtspSetup_option;
+                    nFlags=1;
                 }else{
                     tStep=tagTalkbackRtspSetup_fail;
+                    nFlags=0;
                     INFO_PRINT("setup fail as talkbackRtspSetup_connect fail");
                 }
             }
@@ -177,6 +188,9 @@ bool TalkbackRtsp::setup()
             }
             break;
         }
+    }
+    if(bFlag){
+        nFlags=2;
     }
     return bFlag;
 }
@@ -260,7 +274,7 @@ void TalkbackRtsp::teardown()
 
 void TalkbackRtsp::deinit()
 {
-
+    m_pRtspInfo=NULL;
 }
 
 void TalkbackRtsp::init(tagTalkbackRtspInfo *pRtspInfo)

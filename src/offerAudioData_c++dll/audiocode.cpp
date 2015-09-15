@@ -47,10 +47,14 @@ AudioCode::AudioCode()
     applyCapture();
     m_pApplyAudioNodeList=NULL;
     m_pApplyAudioNodeListLock=new TalkbackLock;
+    m_pApplyAudioEventCallbackStateLock=new TalkbackLock;
     m_bNeedEncodeG711_Alaw=false;
     m_bNeedEncodeG711_Ulaw=false;
     m_nNeedEncodeCountG711_Alaw=0;
     m_nNeedEncodeCountG711_Ulaw=0;
+    m_tApplyAudioEventCallbackState.state=false;
+    m_tApplyAudioEventCallbackState.bExistError=false;
+    m_tApplyAudioEventCallbackState.pMessage=NULL;
 }
 
 AudioCode::~AudioCode()
@@ -74,6 +78,7 @@ AudioCode::~AudioCode()
 bool AudioCode::checkClientIsSupportTalkback()
 {
     //return TalkbackAudioDataCapture::checkClientIsSupportTalkbackEx();
+    return TalkbackAudioDataCapture::checkClientIsSupportTalkback();
     applyCapture();
     int nRet=g_pCapture->checkClientIsSupportTalkback();
     releaseCapture();
@@ -238,6 +243,7 @@ void AudioCode::deinitAudio()
 typedef enum __tagAudioCodeStep{
     tagAudioCodeStep_init,
     tagAudioCodeStep_enCodeData,
+    tagAudioCodeStep_eventcallback,
     tagAudioCodeStep_dispatachData,
     tagAudioCodeStep_default,
     tagAudioCodeStep_deinit,
@@ -254,7 +260,7 @@ static void audioDataCaptureError(void *parm,tagAudioDataCaptureError tError,cha
     }else {
         tAudioError=AUDIO_UNKNOW_ERROR;
     }
-    pTemp->errorCallBack(tAudioError,pErrorInfo);
+    pTemp->applyAudioEventCallbackState(tAudioError,pErrorInfo);
 }
 static bool checkIsReadyForEncode(tagCapureContexInfo *pG711_Alaw,tagCapureContexInfo *pG711_Ulaw,talkback_int64 nAlawCurrentTime,talkback_int64 nUlawCurrentTime,bool &bAlaw,bool &bUlaw)
 {
@@ -361,6 +367,7 @@ TALKBACK_THREAD_RET_TYPE AudioCode::startCodeThread(void *arg){
                 pG711_Ulaw->tDataList[i].nTimeStamp=0;
                 pG711_Ulaw->tDataList[i].pCaptureData=new char[nBuffSize];
             }
+            setCallbackState(true);
             g_pCapture->addCodeToCapture(pG711_Alaw);
             g_pCapture->addCodeToCapture(pG711_Ulaw);
             g_pCapture->setCaptureErrorCallbackFunc((void *)this,audioDataCaptureError);
@@ -386,6 +393,14 @@ TALKBACK_THREAD_RET_TYPE AudioCode::startCodeThread(void *arg){
             tStep=tagAudioCodeStep_dispatachData;
         }
             break;
+        case tagAudioCodeStep_eventcallback:{
+            if(audioCodeStep_eventcallback()==0){
+                tStep=tagAudioCodeStep_deinit;
+            }else{
+                tStep=tagAudioCodeStep_default;
+            }
+        }
+            break;
         case tagAudioCodeStep_dispatachData:{
             //分发数据
             if(bAlawEncodeReady){
@@ -404,6 +419,8 @@ TALKBACK_THREAD_RET_TYPE AudioCode::startCodeThread(void *arg){
             if(m_bCodeThreadStop==false){
                 if(checkIsReadyForEncode(pG711_Alaw,pG711_Ulaw,nAlawCurrentTime,nUlawCurrentTime,bAlawReady,bUlawReady)){
                     tStep=tagAudioCodeStep_enCodeData;
+                }else if(isExistCallback()){
+                    tStep=tagAudioCodeStep_eventcallback;
                 }else{
                     TalkbackThread::mSleep(10);
                 }
@@ -446,6 +463,29 @@ void AudioCode::errorCallBack(tagTalkbackAudioError tError, char *pErrorInfo)
         pTemp=pTemp->pNext;
     }
     m_pApplyAudioNodeListLock->unlock();
+}
+
+void AudioCode::applyAudioEventCallbackState(tagTalkbackAudioError tError, char *pErrorInfo)
+{
+    m_pApplyAudioEventCallbackStateLock->lock();
+    if(m_tApplyAudioEventCallbackState.state==true){
+        m_tApplyAudioEventCallbackState.bExistError=true;
+        m_tApplyAudioEventCallbackState.tError=tError;
+        if(m_tApplyAudioEventCallbackState.pMessage!=NULL){
+            delete m_tApplyAudioEventCallbackState.pMessage;
+            m_tApplyAudioEventCallbackState.pMessage=NULL;
+        }
+        if(NULL!=pErrorInfo){
+            int nLen=strlen(pErrorInfo);
+            if(nLen>0){
+                m_tApplyAudioEventCallbackState.pMessage=new char[nLen];
+                memcpy(m_tApplyAudioEventCallbackState.pMessage,pErrorInfo,nLen);
+            }
+        }
+    }else{
+        //do nothing
+    }
+    m_pApplyAudioEventCallbackStateLock->unlock();
 }
 void AudioCode::disPatchBuff(char *pBuff, tagAudioCodeMode tCodeMode,talkback_int64 nTimeStamp)
 {
@@ -514,6 +554,41 @@ bool AudioCode::releaseAudioEx(void *parm)
         }
     }
     return true;
+}
+
+void AudioCode::setCallbackState(bool state)
+{
+    m_pApplyAudioEventCallbackStateLock->lock();
+    m_tApplyAudioEventCallbackState.state=state;
+    m_pApplyAudioEventCallbackStateLock->unlock();
+}
+
+bool AudioCode::isExistCallback()
+{
+    if(m_tApplyAudioEventCallbackState.state==true&&m_tApplyAudioEventCallbackState.bExistError==true){
+        return true;
+    }
+    return false;
+}
+
+int AudioCode::audioCodeStep_eventcallback()
+{
+    //0:线程需要结束,1:线程接着运行
+    m_pApplyAudioEventCallbackStateLock->lock();
+    if(m_tApplyAudioEventCallbackState.tError==AUDIO_MICROPHONE_UNDETECT||
+            m_tApplyAudioEventCallbackState.tError==AUDIO_CODE_TYPE_UNSUPPORT||
+            m_tApplyAudioEventCallbackState.tError==AUDIO_UNKNOW_ERROR
+            )
+    {
+        errorCallBack(m_tApplyAudioEventCallbackState.tError,m_tApplyAudioEventCallbackState.pMessage);
+    }else{
+        //do nothing
+        INFO_PRINT("audioCodeStep_eventcallback errortype out of range");
+    }
+    m_tApplyAudioEventCallbackState.state=false;
+    m_tApplyAudioEventCallbackState.bExistError=false;
+    m_pApplyAudioEventCallbackStateLock->unlock();
+    return 0;
 }
 
 

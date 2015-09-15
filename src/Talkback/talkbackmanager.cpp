@@ -183,7 +183,6 @@ void TalkbackManager::removeDeviceFromTalkbackEx(lpTalkbackContext parm)
             pRemove->pTalkbackCore->deinitTalkback();
             delete pRemove;
         }
-        delete pRemove;
     }
 
 }
