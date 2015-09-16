@@ -6,7 +6,10 @@
 #include "TalkBackCommonTool.h"
 #include "talkbackRtpDef.h"
 #include "talkbackthread.h"
-
+#ifdef WIN32
+#else
+#include <ctype.h>
+#endif
 TalkbackRtsp::TalkbackRtsp():m_pRtspInfo(NULL)
 {
 }
@@ -854,13 +857,14 @@ bool TalkbackRtsp::readRtspMessage()
     int nRevice,nReadedSize=0,nExpectSize=1;
     int nContext_len=0;
     int nPacket_size=-1;
+    memset(m_pRtspInfo->payload,0,sizeof(m_pRtspInfo->payload));
     do{
         if(nReadedSize+nExpectSize>RTSP_BUF_SIZE){
             VLOG(VLOG_ERROR,"expect rtsp buffer size out of range,readed:%d expected:%d",nReadedSize,nExpectSize);
             return false;
         }
         nRevice=recv(m_pRtspInfo->rtspSocket,pEndPoint,nExpectSize,0);
-        if(nReadedSize<0){
+        if(nRevice<0){
             if(SOCK_ERR==SOCK_EINTR){
                 VLOG(VLOG_WARNING,"tcp recv error SOCK_EINTR");
                 continue;
@@ -959,7 +963,7 @@ bool TalkbackRtsp::parseRtspResponse(int *statusCode, char *info)
     }
     //check cseq
     if(http_get_number(m_pRtspInfo->payload,"CSeq:",&nCseq)==false){
-        VLOG(VLOG_ERROR,"invaild response format, not found cseq");
+        VLOG(VLOG_ERROR,"invaild response format, not found cseq;palyload:%s",m_pRtspInfo->payload);
         return false;
     }else{
         if(nCseq!=m_pRtspInfo->cseq){

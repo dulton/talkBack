@@ -34,12 +34,12 @@ RELDIR = release
 RELDIR = debug
 }
 unix{
-
+DESTDIR = /home/talkback/bin/$${RELDIR}
 }else{
 DESTDIR = $$PWD/../../bin/$${RELDIR}/
 }
 unix{
-
+LIBS += -L$$/home/talkback/bin/$${RELDIR}/ -lOfferAudioData
 }else{
 LIBS += -L$$PWD/../../bin/$${RELDIR}/ -lOfferAudioData
 }

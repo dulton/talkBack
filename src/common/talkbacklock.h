@@ -6,7 +6,7 @@
 #include <windows.h>
 
 #else
-
+#include <pthread.h>
 #endif
 class TalkbackLock
 {
@@ -20,7 +20,7 @@ private:
 #ifdef WIN32
     CRITICAL_SECTION m_csLock;
 #else
-
+pthread_mutex_t m_csLock;
 #endif
 };
 

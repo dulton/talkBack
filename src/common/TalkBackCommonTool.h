@@ -53,7 +53,7 @@
 
 #define ERR_PRINT(str)
 
-#define INFO_PRINT(str) fprintf(stdout,"[file: %s func:%s line: %d] %s\n", __FILE__,__FUNCTION__, __LINE__, str);
+#define INFO_PRINT(str) fprintf(stdout,"[file: %s func:%s line: %d] %s\n", __FILE__,__func__, __LINE__, str);
 
 #endif
 

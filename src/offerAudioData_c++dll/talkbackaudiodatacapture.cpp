@@ -1,10 +1,15 @@
 #include "talkbackaudiodatacapture.h"
 #include "TalkBackCommonTool.h"
 
+#if defined(__cplusplus)
+extern "C"{
+#endif
 #include "AL/al.h"
 #include "AL/alc.h"
 #include "AL/alext.h"
-
+#if defined(__cplusplus)
+}
+#endif
 
 #define CAPTURE_BUFFER_LENGTH_MIN 320        //这个每次捕捉音源数据的数据长度
 #define SAMPLING_RATE             8000      //这个采集音源数据样本的频率，这个变量很重要，关系到你是否能够采集到样本

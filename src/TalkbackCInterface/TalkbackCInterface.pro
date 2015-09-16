@@ -30,12 +30,12 @@ RELDIR = release
 RELDIR = debug
 }
 unix{
-
+DESTDIR = /home/talkback/bin/$${RELDIR}
 }else{
 DESTDIR = $$PWD/../../bin/$${RELDIR}/
 }
 unix{
-
+LIBS += -L/home/talkback/bin/$${RELDIR}/ -lTalkback
 }else{
 LIBS += -L$$PWD/../../bin/$${RELDIR}/ -lTalkback
 }

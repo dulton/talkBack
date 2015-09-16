@@ -60,7 +60,7 @@ RELDIR = debug
 }
 
 unix{
-
+DESTDIR = /home/talkback/bin/$${RELDIR}
 }else{
 DESTDIR = $$PWD/../../bin/$${RELDIR}/
 }
@@ -71,7 +71,7 @@ LIBS += -lws2_32
 
 }
 unix{
-
+LIBS += -L/home/talkback/bin/$${RELDIR}/ -lofferAudioDataCInterface
 }else{
 LIBS += -L$$PWD/../../bin/$${RELDIR} -lofferAudioDataCInterface
 }

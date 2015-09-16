@@ -450,7 +450,7 @@ bool TalkbackCore::talkbackCoreThreadStep_sendbuf_rtp()
 {
     int nSize=0;
     int nBuffsize=getSpecAudioCodeModeFrameBuffSize(m_pRtspInfo->tAudioCodeMode);
-    char *pBuffer=new char[nBuffsize];
+    char pBuffer[nBuffsize];
     memset(pBuffer,0,nBuffsize);
     bool bRet=true;
     long long nTimeStamp=0;
@@ -480,6 +480,9 @@ bool TalkbackCore::talkbackCoreThreadStep_sendbuf_rtp()
                 int freq=m_pRtspInfo->rtpMap.freq;//采样频率
                 m_pRtspInfo->rtptime;//rtp 开始时间
                 uint32_t ts=m_pRtspInfo->rtptime+freq*nInterval/1000;
+                if(m_bStartTalkback==false){
+                    memset(pBuffer,0,nBuffsize);
+                }
                 if(NULL!=m_pRtspInfo->pRtp_audio){
                     if(m_pRtspInfo->pRtp_audio->sendbuf(pBuffer,nSize,ts)){
                         //keep going
@@ -570,16 +573,13 @@ bool TalkbackCore::isTimeToSendRtspKeepAlive()
 
 bool TalkbackCore::isTimeToSendAudioBuffer()
 {
-    if(m_bStartTalkback==true){
-        uint64_t currentTime=TalkbackThread::currentTime();//单位毫秒
-        if(currentTime-m_pRtspInfo->audioDataCheckTime>10){
-            m_pRtspInfo->audioDataCheckTime=currentTime;
-            return true;
-        }
+    uint64_t currentTime=TalkbackThread::currentTime();//单位毫秒
+    if(currentTime-m_pRtspInfo->audioDataCheckTime>10){
+        m_pRtspInfo->audioDataCheckTime=currentTime;
+        return true;
     }else{
-
+        return false;
     }
-    return false;
 }
 
 int TalkbackCore::isTimeToReadSocketData()

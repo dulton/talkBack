@@ -38,11 +38,7 @@ INCLUDEPATH +=$$PWD/../common
 INCLUDEPATH +=$$PWD/../../include
 INCLUDEPATH += $$PWD/../openal/include
 
-unix{
 
-}else{
-LIBS += -L$$PWD/../openal-qt -lOpenAL32
-}
 
 CONFIG(release, debug|release){
 RELDIR = release
@@ -50,7 +46,13 @@ RELDIR = release
 RELDIR = debug
 }
 unix{
-
+DESTDIR = /home/talkback/bin/$${RELDIR}
 }else{
-DESTDIR = $$PWD/../../bin/$${RELDIR}/
+DESTDIR = $$PWD/../../bin/$${RELDIR}
+}
+
+unix{
+LIBS += -L/home/talkback/bin/$${RELDIR}  -lopenal
+}else{
+LIBS += -L$$PWD/../openal-build -lOpenAL32
 }

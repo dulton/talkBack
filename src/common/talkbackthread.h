@@ -3,6 +3,8 @@
 
 #ifdef WIN32
 #include <windows.h>
+#else
+#include<pthread.h>
 #endif
 
 #ifndef TALKBACK_THREAD_RET_TYPE

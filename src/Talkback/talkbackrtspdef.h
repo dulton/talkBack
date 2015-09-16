@@ -49,11 +49,14 @@ typedef unsigned short uint16_t;
 #ifndef uint32_t
 typedef unsigned int 	uint32_t;
 #endif
+
 #ifndef uint64_t
+
 #ifdef _WIN32
 typedef unsigned __int64 uint64_t;
 #else
-typedef unsigned long long uint64_t;
+typedef unsigned long int uint64_t;
+
 #endif
 #endif
 

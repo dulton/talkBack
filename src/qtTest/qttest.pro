@@ -25,14 +25,15 @@ RELDIR = release
 RELDIR = debug
 }
 unix{
-
+DESTDIR = /home/talkback/bin/$${RELDIR}
 }else{
 DESTDIR = $$PWD/../../bin/$${RELDIR}/
 }
 
 INCLUDEPATH +=$$PWD/../../include
 unix{
-
+LIBS += -L$$/home/talkback/bin/$${RELDIR}/ -lofferAudioDataCInterface
+LIBS += -L$$/home/talkback/bin/$${RELDIR}/ -lTalkbackCInterface
 }else{
 LIBS += -L$$PWD/../../bin/$${RELDIR} -lofferAudioDataCInterface
 LIBS += -L$$PWD/../../bin/$${RELDIR} -lTalkbackCInterface
