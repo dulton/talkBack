@@ -16,7 +16,8 @@ SOURCES += \
 
 HEADERS += \
     ../../include/AudioData.h \
-    ../../include/TalkBackDataTypeCommon.h
+    ../../include/TalkBackDataTypeCommon.h \
+    ../../include/TalkbackInterfaceCommon.h
 
 unix {
     target.path = /usr/lib

@@ -8,8 +8,7 @@ typedef struct TalkbackNode{
 }tagTalkbackNode;
 TalkbackManager::TalkbackManager():m_pTalkbackNodeList(NULL)
 {
-    m_tTalkbackNodeListLock.lock();
-    m_tTalkbackNodeListLock.unlock();
+
 }
 
 TalkbackManager::~TalkbackManager()

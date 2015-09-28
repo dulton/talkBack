@@ -110,6 +110,7 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                     tStep=TalkbackCoreThreadStep_deinit;
                     INFO_PRINT("TalkbackCoreThreadStep_init fail");
                 }
+                this->eventCallback(tagTalkbackCInterface_talkback_start,"tagTalkbackCInterface_talkback_start");
             }
             break;
         case TalkbackCoreThreadStep_setup_rtsp:{
@@ -154,7 +155,6 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                 if(talkbackCoreThreadStep_play_rtsp()){
                     tStep=TalkbackCoreThreadStep_init_rtp;
                     bIsRtspPlay=true;
-                    this->eventCallback(tagTalkbackCInterface_talkback_start,"tagTalkbackCInterface_talkback_start");
                     m_pRtspInfo->startPlayTime=TalkbackThread::currentTime();
                     INFO_PRINT("TalkbackCoreThreadStep_play_rtsp success");
                 }else{
@@ -256,7 +256,6 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
                     if(bIsRtspPlay==true){
                         bIsRtspPlay=false;
                         tStep=TalkbackCoreThreadStep_teardown_rtsp;
-                        this->eventCallback(tagTalkbackCInterface_talkback_end,"tagTalkbackCInterface_talkback_end");
                     }else{
                         tStep=TalkbackCoreThreadStep_deinit;
                     }
@@ -264,9 +263,7 @@ TALKBACK_THREAD_RET_TYPE TalkbackCore::startCodeThread(void *arg){
             }
             break;
         case TalkbackCoreThreadStep_deinit:{
-                if(bIsRtspPlay==true){
-                    this->eventCallback(tagTalkbackCInterface_talkback_end,"tagTalkbackCInterface_talkback_end");
-                }
+                this->eventCallback(tagTalkbackCInterface_talkback_end,"tagTalkbackCInterface_talkback_end");
                 talkbackCoreThreadStep_deinit_audioData();
                 talkbackCoreThreadStep_deinit_rtp();
                 talkbackCoreThreadStep_deinit();
@@ -765,7 +762,7 @@ void TalkbackCore::deinitRtspInfo()
 void TalkbackCore::eventCallback(tagTalkbackCInterfaceError tError, char *pError)
 {
     if(m_pTalkbackContext!=NULL){
-        m_pTalkbackContext->errorEventHook(m_pTalkbackContext,tError,pError);
+        m_pTalkbackContext->errorEventHook(m_pTalkbackContext->pUserContext,tError,pError);
     }
 }
 

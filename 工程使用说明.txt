@@ -1,0 +1,29 @@
+文档编译人：sunday
+工程用途：
+	语音对讲动态库
+工程目录：
+bin:存放生成的 dll和lib文件
+include:存放 工程对外部的头文件
+src：存放各个子项目
+	src/common:公共的工具文件
+	src/offerAudioData_c++dll:提供音频数据工程
+	src/offerAudioData_cdll:封装的“提供音频数据工程”的c库工程
+	src/openal:opeanl 工程
+	src/qttest:测试demo
+	src/Talkback:语音对讲工程
+	src/TalkbackCInterface:封装的“语音对讲工程”的c库工程
+toOutBin:使用本工程时，需要依赖的库文件
+toVCLib:针对win 平台 把.a文件转换成 lib 文件
+
+
+使用系统：
+win/linux
+
+工程编译：
+qtcreator+mingW
+各个项目的工程文件在各项项目文件夹内
+
+
+外部直接使用方式：
+同文件位于：include 文件夹
+库文件位于：toOutBin

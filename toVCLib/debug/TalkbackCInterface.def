@@ -1,0 +1,9 @@
+LIBRARY TalkbackCInterface.dll
+EXPORTS
+addDeviceToTalkback
+checkClientIsSupportTalkback
+deinitTalkback
+initTalkback
+pauseTalkback
+removeDeviceFromTalkback
+startTalkback

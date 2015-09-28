@@ -10,6 +10,12 @@ tagAudioContext *g_pContext=NULL;
 
 void mainWindowErrorCallback(void *parm,tagTalkbackCInterfaceError tError,char *pErrorInfo){
     printf("mainWindowErrorCallback:%d;pErrorInfo:%s\n",tError,pErrorInfo);
+    if(parm==NULL){
+        return;
+    }
+    MainWindow *temp=(MainWindow*)parm;
+    qDebug()<<__func__<<__LINE__<<"==============="<<temp;
+    temp->talkbackStateSlotEventCall(tError,pErrorInfo);
 }
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -21,24 +27,34 @@ MainWindow::MainWindow(QWidget *parent) :
     g_pContext->pUserContext=this;
     g_pContext->pAudioDataContext=NULL;
     connect(&m_tTime,SIGNAL(timeout()),this,SLOT(on_get_buff()));
-    m_pTalkbackContext=new tagTalkbackContext;
-    m_pTalkbackContext->pUserContext=this;
-    m_pTalkbackContext->pTalkbackContext=NULL;
-    sprintf(m_pTalkbackContext->ip,"192.168.60.180");
-    sprintf(m_pTalkbackContext->passWord,"12345");
-    sprintf(m_pTalkbackContext->userName,"admin");
-    sprintf(m_pTalkbackContext->url,"rtsp://192.168.60.180:554/Streaming/Channels/1?transportmode=unicast&profile=Profile_1");
-    m_pTalkbackContext->nPort=554;
-    m_pTalkbackContext->errorEventHook=mainWindowErrorCallback;
+    m_pTalkbackContext=NULL;
+    m_pTalkbackContext=initTalkback();
+    connect(this,SIGNAL(talkbackStateSig(int)),this,SLOT(talkbackStateSlot(int)));
+    qDebug()<<__func__<<__LINE__<<"==============="<<this;
 
 }
 
 MainWindow::~MainWindow()
 {
+    if(m_pTalkbackContext!=NULL){
+        removeDeviceFromTalkback(m_pTalkbackContext);
+        deinitTalkback(m_pTalkbackContext);
+    }
     delete ui;
+}
+
+void MainWindow::talkbackStateSlotEventCall(int flags, char *pInfo)
+{
+    emit talkbackStateSig(flags);
+}
+
+void MainWindow::talkbackStateSlot(int flags)
+{
+    qDebug()<<__func__<<__LINE__<<"===================================";
 }
 void errorCallback(void *parm,tagTalkbackAudioError tError,char *pErrorInfo){
     qDebug()<<__func__<<__LINE__<<pErrorInfo;
+
 }
 void MainWindow::on_pushButton_clicked()
 {
@@ -114,7 +130,9 @@ void MainWindow::on_pauseTalkback_clicked()
 
 void MainWindow::on_addDeviceToTalkback_clicked()
 {
-    bool bRet=addDeviceToTalkback(m_pTalkbackContext,TALKBACK_EXCLUSIVE);
+    bool bRet=addDeviceToTalkback(m_pTalkbackContext,TALKBACK_EXCLUSIVE,(void*)this,"admin","12345"\
+                                  ,"rtsp://192.168.60.180:554/Streaming/Channels/1?transportmode=unicast&profile=Profile_1"\
+                                  ,"192.168.60.180",554,(void*)mainWindowErrorCallback);
     qDebug()<<__func__<<__LINE__<<"on_addDeviceToTalkback_clicked:"<<bRet;
 }
 

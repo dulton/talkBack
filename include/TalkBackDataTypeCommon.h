@@ -1,12 +1,8 @@
 #ifndef TALKBACKCOMMON_H
 #define TALKBACKCOMMON_H
 
+#include "TalkbackInterfaceCommon.h"
 
-#if defined(_WIN32)
- #define TALKBACKCALL __cdecl
-#else
- #define TALKBACKCALL
-#endif
 
 #ifndef NULL
 #define NULL 0
@@ -67,21 +63,6 @@ typedef struct __tagTalkbackContext{
 
 #define AUDIODATALISTSIZE 50
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 
-#ifndef TalkbackInterface_API
- #if defined(_WIN32)
-  #define TalkbackInterface_API __declspec(dllimport)
- #else
-  #define TalkbackInterface_API extern
- #endif
-#endif
-
-
-#if defined(__cplusplus)
-}
-#endif
 
 #endif // TALKBACKCOMMON_H
